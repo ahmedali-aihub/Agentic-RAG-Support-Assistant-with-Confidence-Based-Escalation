@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Env
+.env
+.env.local
+
+# Data (large/generated)
+backend/data/raw/*
+backend/data/processed/*
+backend/data/chroma_db/*
+!backend/data/raw/.gitkeep
+!backend/data/processed/.gitkeep
+!backend/data/chroma_db/.gitkeep
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

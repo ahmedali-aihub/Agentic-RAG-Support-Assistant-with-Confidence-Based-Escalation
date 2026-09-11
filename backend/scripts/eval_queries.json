@@ -1,0 +1,25 @@
+[
+  {"question": "How do I accept a credit card payment using Stripe Checkout?", "expected": "answer"},
+  {"question": "What's the difference between a PaymentIntent and a Checkout Session?", "expected": "answer"},
+  {"question": "How do I issue a full refund to a customer?", "expected": "answer"},
+  {"question": "How do I handle a disputed charge (chargeback)?", "expected": "answer"},
+  {"question": "How do I cancel a customer's subscription?", "expected": "answer"},
+  {"question": "How do I set up a free trial period for a subscription?", "expected": "answer"},
+  {"question": "How do I verify a webhook signature?", "expected": "answer"},
+  {"question": "What test card numbers can I use in Stripe's test mode?", "expected": "answer"},
+  {"question": "Why was my customer's card declined?", "expected": "answer"},
+  {"question": "How do I restrict API key permissions?", "expected": "answer"},
+  {"question": "What's the meaning of error code 'card_declined'?", "expected": "answer"},
+  {"question": "How long does it take for payouts to reach my bank account?", "expected": "answer"},
+  {"question": "How do I split payments between multiple connected accounts?", "expected": "answer"},
+  {"question": "How do I create and send an invoice to a customer?", "expected": "answer"},
+
+  {"question": "Why is my personal bank account showing a pending charge from an unrelated company?", "expected": "escalate"},
+  {"question": "My Stripe account was suspended, can you reactivate it right now?", "expected": "escalate"},
+  {"question": "Can you tell me the exact revenue Stripe made last quarter?", "expected": "escalate"},
+  {"question": "I think someone stole my identity using my Stripe account, what do I do immediately?", "expected": "escalate"},
+  {"question": "What's the weather like in San Francisco today?", "expected": "escalate"},
+  {"question": "Can you cancel my specific subscription ID sub_1A2B3C for me right now?", "expected": "escalate"},
+  {"question": "Why did my specific payout pay_9f8e7d fail last night?", "expected": "escalate"},
+  {"question": "Can you give me legal advice on whether my business needs a money transmitter license?", "expected": "escalate"}
+]
