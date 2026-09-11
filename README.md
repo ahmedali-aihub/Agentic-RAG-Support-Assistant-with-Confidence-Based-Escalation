@@ -92,6 +92,32 @@ npm run dev
 
 Open the printed local URL (default `http://localhost:5173`).
 
+## Testing
+
+**Unit tests** — no API key needed, covers the judge's JSON parsing and the
+model fallback chain:
+
+```bash
+cd backend
+python -m pytest -q
+```
+
+**Single question** through the graph:
+
+```bash
+cd backend
+python -c "from app.graph.builder import run_query; s = run_query('How do I cancel a subscription?'); print(s['path_taken'], s['confidence_score']); print(s['answer'])"
+```
+
+**Inspect the escalation queue** after some questions have escalated:
+
+```bash
+cd backend
+python -c "import json; from app.graph.escalation import list_tickets; print(json.dumps(list_tickets(), indent=2))"
+```
+
+Or hit `GET /tickets` once the API is running.
+
 ## Evaluation
 
 A labeled set of in-scope and out-of-scope questions lives in
@@ -105,6 +131,15 @@ python scripts/run_eval.py
 This reports **escalation accuracy** (did it answer the answerable questions and
 escalate the genuinely unanswerable ones?) and latency, and writes per-question
 results to `backend/scripts/eval_results.json`.
+
+It breaks the errors out by direction, because they don't cost the same:
+
+- **Over-escalated** — answerable, but escalated. Wastes a human's time.
+- **Wrongly answered** — should have escalated, but answered anyway. This is the
+  expensive one: it's a potentially wrong answer reaching a customer, and it's
+  exactly the failure this project exists to prevent.
+
+Tune `CONFIDENCE_THRESHOLD` to trade one against the other.
 
 ## Project layout
 
