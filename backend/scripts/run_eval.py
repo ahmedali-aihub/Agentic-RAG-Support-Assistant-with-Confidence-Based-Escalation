@@ -30,7 +30,6 @@ def main(queries_path: Path):
     queries = json.loads(queries_path.read_text(encoding="utf-8"))
 
     results = []
-    latencies = []
 
     for item in queries:
         question = item["question"]
@@ -39,10 +38,14 @@ def main(queries_path: Path):
         start = time.perf_counter()
         state = run_query(question)
         elapsed = time.perf_counter() - start
-        latencies.append(elapsed)
 
         actual = "escalate" if state.get("path_taken") == "escalated" else "answer"
         correct = actual == expected
+
+        # No judge model means every model in the chain failed (usually the free
+        # tier's daily quota). That escalation reflects an outage, not a
+        # confidence decision, so scoring it would silently corrupt the metric.
+        judged = state.get("judge_model") is not None
 
         results.append(
             {
@@ -50,40 +53,59 @@ def main(queries_path: Path):
                 "expected": expected,
                 "actual": actual,
                 "correct": correct,
+                "judged": judged,
+                "judge_model": state.get("judge_model"),
                 "confidence_score": state.get("confidence_score"),
                 "latency_s": round(elapsed, 2),
             }
         )
-        status = "OK " if correct else "MISS"
+        if judged:
+            status = "OK " if correct else "MISS"
+        else:
+            status = "DEAD"
         score = state.get("confidence_score", 0.0)
         print(f"[{status}] ({elapsed:.2f}s, conf={score:.2f}) "
               f"expected={expected:<9} actual={actual:<9} {question}")
 
-    n_correct = sum(r["correct"] for r in results)
-    total = len(results)
-    accuracy = n_correct / total if total else 0.0
+    scored = [r for r in results if r["judged"]]
+    dead = [r for r in results if not r["judged"]]
+
+    print("\n=== Summary ===")
+
+    if dead:
+        print(f"!! {len(dead)}/{len(results)} questions never reached a judge — every")
+        print("   model in the chain failed (usually the free-tier daily quota).")
+        print("   They are EXCLUDED below; the accuracy covers only judged questions.")
+        print()
+
+    if not scored:
+        print("No questions were judged. Nothing to measure — rerun once quota resets.")
+        return
+
+    n_correct = sum(r["correct"] for r in scored)
+    total = len(scored)
+    accuracy = n_correct / total
 
     # Overall accuracy hides which way the bot errs, and the two errors are not
     # equally bad: answering something it shouldn't risks a wrong answer reaching
     # a customer, while over-escalating only costs a human's time.
-    answered_ok = sum(1 for r in results if r["expected"] == "answer" and r["correct"])
-    n_answerable = sum(1 for r in results if r["expected"] == "answer")
-    escalated_ok = sum(1 for r in results if r["expected"] == "escalate" and r["correct"])
-    n_escalatable = sum(1 for r in results if r["expected"] == "escalate")
+    answered_ok = sum(1 for r in scored if r["expected"] == "answer" and r["correct"])
+    n_answerable = sum(1 for r in scored if r["expected"] == "answer")
+    escalated_ok = sum(1 for r in scored if r["expected"] == "escalate" and r["correct"])
+    n_escalatable = sum(1 for r in scored if r["expected"] == "escalate")
 
-    over_escalated = n_answerable - answered_ok
-    wrongly_answered = n_escalatable - escalated_ok
-
-    print("\n=== Summary ===")
     print(f"Escalation accuracy : {n_correct}/{total} = {accuracy:.1%}")
-    print(f"  Answerable handled: {answered_ok}/{n_answerable}")
+    print(f"  Answerable handled : {answered_ok}/{n_answerable}")
     print(f"  Unanswerable caught: {escalated_ok}/{n_escalatable}")
-    print(f"  Over-escalated (answerable, but escalated): {over_escalated}")
-    print(f"  Wrongly answered (should have escalated)  : {wrongly_answered}  <- the costly error")
-    print(f"Latency: mean={mean(latencies):.2f}s median={median(latencies):.2f}s "
-          f"max={max(latencies):.2f}s")
+    print(f"  Over-escalated (answerable, but escalated): {n_answerable - answered_ok}")
+    print(f"  Wrongly answered (should have escalated)  : {n_escalatable - escalated_ok}"
+          "  <- the costly error")
 
-    misses = [r for r in results if not r["correct"]]
+    judged_latencies = [r["latency_s"] for r in scored]
+    print(f"Latency (judged only): mean={mean(judged_latencies):.2f}s "
+          f"median={median(judged_latencies):.2f}s max={max(judged_latencies):.2f}s")
+
+    misses = [r for r in scored if not r["correct"]]
     if misses:
         print("\nMisses:")
         for r in misses:
