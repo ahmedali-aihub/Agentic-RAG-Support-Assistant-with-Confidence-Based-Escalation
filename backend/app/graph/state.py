@@ -13,7 +13,9 @@ class GraphState(TypedDict, total=False):
     is_confident: bool
     confidence_score: float
     confidence_reasoning: str
+    judge_model: str | None
     answer: str
+    answer_model: str | None
     citations: list[str]
     escalation_summary: str
     escalation_id: str

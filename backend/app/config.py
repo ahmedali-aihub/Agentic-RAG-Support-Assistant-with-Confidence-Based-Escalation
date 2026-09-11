@@ -1,12 +1,29 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Free OpenRouter models, tried in order. Ordered by how much we trust them to
+# follow the judge's JSON contract: models advertising structured-output support
+# come first, then general text models, with OpenRouter's auto-router last.
+DEFAULT_FREE_MODEL_CHAIN = [
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "nex-agi/nex-n2.5-pro:free",
+    "google/gemma-4-31b-it:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nex-agi/nex-n2.5-mini:free",
+    "openrouter/free",
+]
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     openrouter_api_key: str
-    openrouter_model: str = "anthropic/claude-3.5-sonnet"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
+    # Comma-separated in .env; falls back to the curated free chain above.
+    openrouter_models: str = ""
+
+    request_timeout_seconds: float = 60.0
 
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -15,6 +32,17 @@ class Settings(BaseSettings):
 
     retrieval_top_k: int = 5
     confidence_threshold: float = 0.6
+
+    @field_validator("openrouter_models")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        return v.strip()
+
+    @property
+    def model_chain(self) -> list[str]:
+        if not self.openrouter_models:
+            return DEFAULT_FREE_MODEL_CHAIN
+        return [m.strip() for m in self.openrouter_models.split(",") if m.strip()]
 
 
 settings = Settings()

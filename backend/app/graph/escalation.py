@@ -8,7 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.graph.confidence import format_chunks_for_prompt
 from app.graph.state import GraphState
-from app.llm import get_chat_model
+from app.llm import AllModelsFailed, invoke_with_fallback
 
 QUEUE_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "human_queue.json"
 _queue_lock = Lock()
@@ -54,11 +54,18 @@ def escalate(state: GraphState) -> GraphState:
     context = format_chunks_for_prompt(chunks)
     user_prompt = f"Question: {question}\n\nPartial/related excerpts found:\n{context}"
 
-    llm = get_chat_model(temperature=0.2)
-    response = llm.invoke(
-        [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_prompt)]
-    )
-    summary = response.content.strip()
+    messages = [
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=user_prompt),
+    ]
+
+    # The ticket must be filed even if every model is down — losing the
+    # customer's question is worse than filing it without a triage summary.
+    try:
+        summary, summary_model = invoke_with_fallback(messages, temperature=0.2)
+    except AllModelsFailed:
+        summary = "(Automatic triage summary unavailable — see the raw question.)"
+        summary_model = None
 
     ticket_id = str(uuid.uuid4())[:8]
     ticket = {
@@ -66,8 +73,10 @@ def escalate(state: GraphState) -> GraphState:
         "created_at": datetime.now(timezone.utc).isoformat(),
         "question": question,
         "summary": summary,
+        "summary_model": summary_model,
         "confidence_score": state.get("confidence_score"),
         "confidence_reasoning": state.get("confidence_reasoning"),
+        "judge_model": state.get("judge_model"),
         "related_sources": sorted({c["source_url"] for c in chunks}),
         "status": "open",
     }

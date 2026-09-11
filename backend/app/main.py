@@ -29,6 +29,7 @@ def ask(request: AskRequest):
         citations=result.get("citations", []),
         confidence_score=result.get("confidence_score"),
         escalation_id=result.get("escalation_id"),
+        served_by=result.get("answer_model") or result.get("judge_model"),
     )
 
 
