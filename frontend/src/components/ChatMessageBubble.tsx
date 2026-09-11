@@ -31,6 +31,9 @@ export function ChatMessageBubble({ message }: { message: ChatMessage }) {
               </div>
             )}
             <p className="bubble-text">{message.text}</p>
+            {!isUser && message.servedBy && (
+              <div className="served-by">via {message.servedBy}</div>
+            )}
             {!!message.citations?.length && (
               <div className="citations">
                 <span className="citations-label">Sources</span>

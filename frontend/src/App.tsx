@@ -47,6 +47,7 @@ function App() {
                 citations: res.citations,
                 confidenceScore: res.confidence_score,
                 escalationId: res.escalation_id,
+                servedBy: res.served_by,
               }
             : m
         )

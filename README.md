@@ -31,11 +31,30 @@ LangGraph:
 ## Stack
 
 - Orchestration: LangGraph
-- LLM: OpenRouter (`langchain-openai` pointed at OpenRouter's OpenAI-compatible API)
+- LLM: OpenRouter free models, with automatic fallback across a chain (see below)
 - Embeddings: local HuggingFace sentence-transformer (`all-MiniLM-L6-v2`) — no API cost
 - Vector DB: Chroma (local, persistent)
 - Backend: FastAPI
 - Frontend: React + TypeScript (Vite)
+
+Running entirely on free models means the whole project costs nothing to demo.
+
+## Model fallback
+
+Free OpenRouter models are rate-limited and intermittently unavailable, so every
+LLM call walks a chain of them and takes the first usable result. A model is
+skipped both when the call raises (429, 5xx, timeout) **and** when its output
+fails the caller's parse step — for the confidence judge, a model that replies in
+prose where JSON was required is as useless as one that's down, and that failure
+would otherwise be silent.
+
+The chain is set in `app/config.py` and overridable via `OPENROUTER_MODELS`
+(comma-separated, tried left to right). Responses report which model answered,
+via `served_by` on `/ask` and `judge_model` / `summary_model` on tickets.
+
+If every model fails, each node degrades deliberately rather than crashing: the
+judge reports no confidence (so the query escalates to a human), and escalation
+still files the ticket without its triage summary.
 
 ## Setup
 

@@ -4,6 +4,7 @@ export interface AskResponse {
   citations: string[];
   confidence_score: number | null;
   escalation_id: string | null;
+  served_by: string | null;
 }
 
 export interface ChatMessage {
@@ -14,5 +15,6 @@ export interface ChatMessage {
   citations?: string[];
   confidenceScore?: number | null;
   escalationId?: string | null;
+  servedBy?: string | null;
   pending?: boolean;
 }

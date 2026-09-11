@@ -93,6 +93,13 @@
   color: #166534;
 }
 
+.served-by {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
 .citations {
   margin-top: 8px;
   padding-top: 8px;
