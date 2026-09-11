@@ -82,15 +82,30 @@ def escalate(state: GraphState) -> GraphState:
     }
     enqueue_ticket(ticket)
 
+    # A judge that never ran means the models were unreachable, not that the
+    # question was judged unanswerable. Saying "I'm not confident" there blames
+    # the question for what is actually an outage.
+    service_down = state.get("judge_model") is None
+
+    if service_down:
+        message = (
+            "Our answering service is temporarily unavailable, so I couldn't check "
+            "this against our documentation. I've passed your question to our support "
+            f"team so nothing is lost. (Ticket #{ticket_id})"
+        )
+    else:
+        message = (
+            "I'm not confident I can answer this accurately from our documentation, "
+            "so I've escalated it to our support team. They'll follow up shortly. "
+            f"(Ticket #{ticket_id})"
+        )
+
     return {
         **state,
         "escalation_summary": summary,
         "escalation_id": ticket_id,
-        "answer": (
-            "I'm not confident I can answer this accurately from our documentation, "
-            "so I've escalated it to our support team. They'll follow up shortly. "
-            f"(Ticket #{ticket_id})"
-        ),
+        "answer": message,
         "citations": [],
         "path_taken": "escalated",
+        "escalation_reason": "service_unavailable" if service_down else "low_confidence",
     }

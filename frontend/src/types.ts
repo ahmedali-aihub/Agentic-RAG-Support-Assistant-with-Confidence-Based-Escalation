@@ -1,20 +1,26 @@
+export type EscalationReason = "low_confidence" | "service_unavailable";
+
 export interface AskResponse {
   answer: string;
   escalated: boolean;
   citations: string[];
   confidence_score: number | null;
   escalation_id: string | null;
+  escalation_reason: EscalationReason | null;
   served_by: string | null;
 }
+
+export type Outcome = "answered" | "escalated" | "unavailable" | "error";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
-  escalated?: boolean;
+  outcome?: Outcome;
   citations?: string[];
   confidenceScore?: number | null;
   escalationId?: string | null;
   servedBy?: string | null;
   pending?: boolean;
+  elapsedMs?: number;
 }

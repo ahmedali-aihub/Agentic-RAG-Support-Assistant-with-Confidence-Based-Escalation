@@ -11,6 +11,8 @@ class AskResponse(BaseModel):
     citations: list[str] = []
     confidence_score: float | None = None
     escalation_id: str | None = None
+    # "low_confidence" (judged unanswerable) or "service_unavailable" (models down).
+    escalation_reason: str | None = None
     # Named without a `model_` prefix to stay clear of Pydantic's protected namespace.
     served_by: str | None = None
 

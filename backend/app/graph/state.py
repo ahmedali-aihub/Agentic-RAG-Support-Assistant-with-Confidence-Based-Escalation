@@ -19,4 +19,5 @@ class GraphState(TypedDict, total=False):
     citations: list[str]
     escalation_summary: str
     escalation_id: str
+    escalation_reason: str
     path_taken: str
