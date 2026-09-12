@@ -4,40 +4,32 @@ import type { ChatMessage } from "../types";
 
 type NodeState = "idle" | "active" | "done" | "skipped" | "taken" | "rejected";
 
-interface NodeSpec {
-  id: string;
-  label: string;
-  detail: string;
-}
+const NODES = [
+  { id: "retrieve", label: "Retrieve", detail: "Pulls 20 candidate passages from 313 indexed chunks, then a cross-encoder reranks them to the best 5." },
+  { id: "judge", label: "Judge", detail: "A model reads those passages and scores whether they genuinely answer the question." },
+  { id: "rewrite", label: "Rewrite", detail: "After a weak first pass, restates the question in documentation vocabulary and searches again." },
+  { id: "answer", label: "Answer", detail: "Writes the reply from the retrieved passages and cites every source it used." },
+  { id: "escalate", label: "Escalate", detail: "Files a ticket with a triage summary so a person can pick the question up." },
+] as const;
 
-const NODES: NodeSpec[] = [
-  { id: "retrieve", label: "RETRIEVE", detail: "20 candidates pulled from 313 chunks, reranked to the best 5 by a cross-encoder." },
-  { id: "judge", label: "JUDGE", detail: "A model scores whether those passages actually answer the question." },
-  { id: "rewrite", label: "REWRITE", detail: "On a weak first pass, restates the question in documentation vocabulary and searches again." },
-  { id: "answer", label: "ANSWER", detail: "Writes the reply from the retrieved passages and cites its sources." },
-  { id: "escalate", label: "ESCALATE", detail: "Files a ticket with a triage summary so a human picks it up." },
-];
-
-const STATE_STYLE: Record<NodeState, string> = {
+const STYLE: Record<NodeState, string> = {
   idle: "border-line text-faint",
-  active: "border-signal text-signal glow-signal",
-  done: "border-signal-dim text-signal",
-  taken: "border-signal-dim text-signal",
-  rejected: "border-line text-faint opacity-35",
-  skipped: "border-line text-faint opacity-35",
+  active: "border-line-bright bg-raised text-text bevel-lift",
+  done: "border-line-bright bg-raised text-text",
+  taken: "border-line-bright bg-raised text-text",
+  rejected: "border-line text-faint opacity-40",
+  skipped: "border-line text-faint opacity-40",
 };
 
-function nodeStates(msg: ChatMessage | null, busy: boolean): Record<string, NodeState> {
+function statesFor(msg: ChatMessage | null, busy: boolean): Record<string, NodeState> {
   if (busy) {
     return { retrieve: "active", judge: "active", rewrite: "idle", answer: "idle", escalate: "idle" };
   }
   if (!msg?.outcome) {
     return { retrieve: "idle", judge: "idle", rewrite: "idle", answer: "idle", escalate: "idle" };
   }
-
   const retried = (msg.attempts ?? 1) > 1;
   const answered = msg.outcome === "answered";
-
   return {
     retrieve: "done",
     judge: "done",
@@ -47,31 +39,26 @@ function nodeStates(msg: ChatMessage | null, busy: boolean): Record<string, Node
   };
 }
 
-export function PipelineTrace({
-  latest,
-  busy,
-}: {
-  latest: ChatMessage | null;
-  busy: boolean;
-}) {
+export function PipelineTrace({ latest, busy }: { latest: ChatMessage | null; busy: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
-  const states = nodeStates(latest, busy);
+  const states = statesFor(latest, busy);
 
   return (
-    <div className="flex flex-col gap-1.5 p-3">
+    <div className="flex flex-col gap-1 p-4">
       {NODES.map((node, i) => {
         const state = states[node.id];
         const isOpen = open === node.id;
         const live = state === "active";
+        const on = state === "taken" || state === "done";
 
         return (
           <div key={node.id}>
             {i > 0 && (
-              <div className="relative ml-[11px] h-3 w-px overflow-hidden bg-line">
+              <div className="relative my-0.5 ml-[15px] h-4 w-px overflow-hidden bg-line">
                 {busy && (
                   <span
-                    className="absolute inset-0 bg-signal"
-                    style={{ animation: `trace 1.4s linear ${i * 0.18}s infinite` }}
+                    className="absolute inset-x-0 h-3 bg-gradient-to-b from-transparent via-silver to-transparent"
+                    style={{ animation: `glint 1.8s cubic-bezier(0.4,0,0.6,1) ${i * 0.2}s infinite` }}
                   />
                 )}
               </div>
@@ -82,29 +69,23 @@ export function PipelineTrace({
               onMouseEnter={() => setOpen(node.id)}
               onMouseLeave={() => setOpen(null)}
               onClick={() => setOpen(isOpen ? null : node.id)}
-              className={`flex w-full items-center gap-2.5 border px-2.5 py-2 text-left transition-all duration-200 hover:bg-hover active:scale-[0.985] ${STATE_STYLE[state]}`}
+              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-hover active:scale-[0.98] ${STYLE[state]}`}
             >
-              <StatusDot
-                tone={state === "rejected" || state === "skipped" ? "idle" : "signal"}
-                active={live}
-              />
-              <span className="font-mono text-[0.68rem] font-bold tracking-[0.1em]">
-                {node.label}
-              </span>
-              <span className="ml-auto font-mono text-[0.6rem] text-faint">
-                {state === "taken" && "◆"}
-                {state === "rejected" && "—"}
-                {state === "skipped" && "—"}
-                {state === "done" && "✓"}
+              <StatusDot tone={on ? "silver" : "idle"} active={live} />
+              <span className="text-[0.82rem] font-medium">{node.label}</span>
+              <span className="ml-auto font-mono text-[0.62rem] text-faint">
+                {state === "taken" && "●"}
+                {state === "done" && "●"}
+                {(state === "rejected" || state === "skipped") && "○"}
               </span>
             </button>
 
             <div
-              className="grid transition-all duration-300"
+              className="grid transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
               style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
             >
               <div className="overflow-hidden">
-                <p className="mt-1 ml-[11px] border-l border-line py-1 pl-3 text-[0.72rem] leading-relaxed text-dim">
+                <p className="mt-1 ml-[15px] border-l border-line py-1 pl-4 text-[0.76rem] leading-relaxed text-dim">
                   {node.detail}
                 </p>
               </div>
@@ -114,9 +95,9 @@ export function PipelineTrace({
       })}
 
       {latest?.rewrittenQuery && (
-        <div className="mt-2 border border-dashed border-line-bright p-2.5">
+        <div className="animate-fade mt-4 rounded-xl border border-line bg-raised p-3">
           <Eyebrow>Re-searched as</Eyebrow>
-          <p className="mt-1 font-mono text-[0.7rem] leading-relaxed text-text">
+          <p className="mt-1.5 text-[0.78rem] leading-relaxed text-text">
             {latest.rewrittenQuery}
           </p>
         </div>

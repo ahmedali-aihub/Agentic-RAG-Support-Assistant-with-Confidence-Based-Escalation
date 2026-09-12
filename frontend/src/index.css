@@ -1,39 +1,43 @@
 @import "tailwindcss";
 
-/* Command-center palette. Committed single-theme: this is an instrument
-   readout, and a light variant would undo the thing it is for. */
+/* Pure black ground with a platinum/silver range on top. Committed single
+   theme: the product is a dark console, and a light variant would undo it. */
 @theme {
-  --color-void: #070809;
-  --color-panel: #0d0f11;
-  --color-raised: #14171a;
-  --color-hover: #1b1f23;
-  --color-line: #1e2429;
-  --color-line-bright: #2b343b;
+  --color-void: #000000;
+  --color-panel: #0a0a0c;
+  --color-raised: #131316;
+  --color-hover: #1c1c20;
+  --color-line: #232326;
+  --color-line-bright: #3a3a3f;
 
-  --color-text: #e6ebe8;
-  --color-dim: #8b9691;
-  --color-faint: #5a6560;
+  /* Silver range. Text sits high; chrome and dividers sit low. */
+  --color-text: #f5f5f7;
+  --color-dim: #a1a1a6;
+  --color-faint: #6e6e73;
 
-  /* Accent: status, active state and data highlights only. */
-  --color-signal: #3dff88;
-  --color-signal-dim: #1f8a4a;
+  /* Silver is the primary accent — gradients built from these two stops. */
+  --color-silver: #e8e8ed;
+  --color-steel: #86868b;
 
-  /* Semantic states, deliberately distinct hues from the accent. */
-  --color-warn: #ffb340;
-  --color-alert: #ff5b5b;
+  /* Semantic states. Apple's own system hues, which stay calm on black. */
+  --color-good: #30d158;
+  --color-warn: #ff9f0a;
+  --color-alert: #ff453a;
 
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Consolas, monospace;
 }
 
 :root {
   color-scheme: dark;
   font-family: var(--font-display);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.47;
+  letter-spacing: -0.01em;
   color: var(--color-text);
   background: var(--color-void);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -52,82 +56,68 @@ body {
   position: relative;
 }
 
-/* Grid + scanline texture. Fixed and non-interactive so it reads as the
-   surface the interface sits on rather than page content. */
+/* A single soft key light from above, the way Apple lights a product against
+   black. No grid, no scanlines — the ground stays pure. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image:
-    linear-gradient(rgba(61, 255, 136, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61, 255, 136, 0.028) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 120% 80% at 50% 0%, #000 35%, transparent 100%);
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.014) 0px,
-    rgba(255, 255, 255, 0.014) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  background:
+    radial-gradient(ellipse 90% 52% at 50% -12%, rgba(255, 255, 255, 0.07), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 104%, rgba(255, 255, 255, 0.025), transparent 70%);
 }
 
 button {
   font: inherit;
   color: inherit;
+  letter-spacing: inherit;
 }
 
 :focus-visible {
-  outline: 1px solid var(--color-signal);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-silver);
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-line-bright);
-  border: 2px solid var(--color-void);
-  border-radius: 5px;
+  background: #2e2e33;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-signal-dim);
+  background: #48484d;
+  background-clip: content-box;
 }
 
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(61, 255, 136, 0.45); }
-  70% { box-shadow: 0 0 0 6px rgba(61, 255, 136, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(61, 255, 136, 0); }
-}
-
-@keyframes pulse-ring-warn {
-  0% { box-shadow: 0 0 0 0 rgba(255, 179, 64, 0.45); }
-  70% { box-shadow: 0 0 0 6px rgba(255, 179, 64, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 179, 64, 0); }
-}
-
+/* Apple's motion signature: long, heavily eased, never bouncy. */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: none; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes sweep {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
 }
 
 @keyframes caret {
@@ -139,24 +129,44 @@ button {
   to { transform: rotate(360deg); }
 }
 
-@keyframes trace {
-  0% { transform: translateY(-100%); opacity: 0; }
-  40% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
+/* A highlight travelling along a hairline — the only "active" motion. */
+@keyframes glint {
+  0% { transform: translateY(-120%); }
+  100% { transform: translateY(320%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @utility animate-rise {
-  animation: rise 0.42s cubic-bezier(0.22, 0.92, 0.3, 1) both;
+  animation: rise 0.62s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
-@utility glow-signal {
-  box-shadow: 0 0 0 1px rgba(61, 255, 136, 0.28), 0 0 18px -4px rgba(61, 255, 136, 0.4);
+@utility animate-fade {
+  animation: fade 0.5s ease both;
 }
-@utility glow-warn {
-  box-shadow: 0 0 0 1px rgba(255, 179, 64, 0.28), 0 0 18px -4px rgba(255, 179, 64, 0.4);
+
+/* Brushed-metal edge: a hairline that catches light at the top. */
+@utility bevel {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 1px 2px rgba(0, 0, 0, 0.6);
 }
-@utility glow-alert {
-  box-shadow: 0 0 0 1px rgba(255, 91, 91, 0.28), 0 0 18px -4px rgba(255, 91, 91, 0.4);
+
+@utility bevel-lift {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 8px 28px -10px rgba(0, 0, 0, 0.9);
+}
+
+/* Silver text treatment for headline numerals and marks. */
+@utility silver-text {
+  background: linear-gradient(180deg, #ffffff 0%, #d4d4dc 48%, #9a9aa2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
