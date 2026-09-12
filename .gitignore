@@ -10,6 +10,12 @@ venv/
 .env
 .env.local
 
+# Generated eval output. These are build artifacts, not source, and they embed
+# whole model answers -- which quote example credentials straight out of the
+# docs and trip GitHub's secret scanning.
+backend/scripts/comparison_results.json
+backend/scripts/eval_results.json
+
 # Data (large/generated)
 backend/data/raw/*
 backend/data/processed/*

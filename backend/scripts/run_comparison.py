@@ -66,9 +66,30 @@ def judge_hallucination(question: str, answer: str) -> dict | None:
         return None
 
 
+def interleave(queries: list[dict]) -> list[dict]:
+    """Alternate in-scope and out-of-scope questions.
+
+    A run on a rate-limited key usually dies partway through. In file order that
+    leaves every out-of-scope question unjudged -- exactly the half the
+    hallucination comparison depends on -- so the partial run says nothing.
+    Alternating means whatever budget exists is spent on both kinds.
+    """
+    answerable = [q for q in queries if q["expected"] == "answer"]
+    escalatable = [q for q in queries if q["expected"] == "escalate"]
+
+    mixed: list[dict] = []
+    for a, b in zip(answerable, escalatable):
+        mixed.extend([a, b])
+    longer = answerable if len(answerable) > len(escalatable) else escalatable
+    mixed.extend(longer[min(len(answerable), len(escalatable)) :])
+    return mixed
+
+
 def main(queries_path: Path):
-    queries = json.loads(queries_path.read_text(encoding="utf-8"))
-    print(f"Comparing on {len(queries)} questions from {queries_path.name}\n")
+    queries = interleave(json.loads(queries_path.read_text(encoding="utf-8")))
+    out = queries_path.parent / "comparison_results.json"
+    print(f"Comparing on {len(queries)} questions from {queries_path.name}")
+    print("(in-scope and out-of-scope interleaved so a partial run still compares both)\n")
 
     rows = []
     for i, item in enumerate(queries, 1):
@@ -103,7 +124,13 @@ def main(queries_path: Path):
 
         rows.append(row)
 
+        # Written every question: a rate-limited run dies mid-set, and losing an
+        # hour of judged questions to that is avoidable.
+        out.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+
         mark = "OK " if row["agentic_route"] == expected else "MISS"
+        if not row["agentic_judged"]:
+            mark = "DEAD"
         extra = ""
         if expected == "escalate" and row["baseline_verdict"]:
             extra = f" | baseline: {row['baseline_verdict']}"
@@ -111,10 +138,14 @@ def main(queries_path: Path):
         print(f"[{i}/{len(queries)}] [{mark}] {expected:<8} -> "
               f"{row['agentic_route']:<8}{retried}{extra}  {q[:60]}")
 
-    report(rows)
+        # Once the budget is gone every remaining question is an outage, not a
+        # measurement, so stop instead of spending an hour proving it.
+        if len(rows) >= 3 and not any(r["agentic_judged"] for r in rows[-3:]):
+            print(f"\nStopping at {i}/{len(queries)}: three consecutive questions "
+                  "reached no model. Rerun when the quota resets.")
+            break
 
-    out = queries_path.parent / "comparison_results.json"
-    out.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    report(rows)
     print(f"\nDetailed results -> {out}")
 
 
@@ -147,6 +178,10 @@ def report(rows: list[dict]):
             print(f"  Query rewrite fired    : {retried}, recovered {recovered}")
 
     print("\nOUT-OF-SCOPE QUESTIONS (the docs cannot cover these)")
+    if not unanswerable:
+        print("  No out-of-scope question reached a judge, so there is no")
+        print("  hallucination comparison in this run — the headline result is")
+        print("  missing, not zero. Rerun with budget for the whole set.")
     if unanswerable:
         agentic_esc = sum(1 for r in unanswerable if r["agentic_route"] == "escalate")
         halluc = sum(1 for r in unanswerable if r["baseline_verdict"] == "hallucinated")
