@@ -10,6 +10,7 @@ class AskResponse(BaseModel):
     escalated: bool
     citations: list[str] = []
     confidence_score: float | None = None
+    confidence_reasoning: str | None = None
     escalation_id: str | None = None
     # "low_confidence" (judged unanswerable) or "service_unavailable" (models down).
     escalation_reason: str | None = None
@@ -17,6 +18,12 @@ class AskResponse(BaseModel):
     served_by: str | None = None
     attempts: int | None = None
     rewritten_query: str | None = None
+    # Milliseconds per graph node, so the extra cost of judging is attributable
+    # rather than hidden in one total.
+    timings: dict[str, float] = {}
+    chunks_considered: int | None = None
+    chunks_used: int | None = None
+    top_relevance: float | None = None
 
 
 class TicketOut(BaseModel):

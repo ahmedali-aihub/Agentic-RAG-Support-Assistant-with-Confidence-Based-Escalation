@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Eyebrow, StatusDot } from "./Primitives";
 import type { ChatMessage } from "../types";
 
-type NodeState = "idle" | "active" | "done" | "skipped" | "taken" | "rejected";
+type NodeState = "idle" | "active" | "done" | "skipped" | "taken" | "rejected" | "failed";
 
 const NODES = [
   { id: "retrieve", label: "Retrieve", detail: "Pulls 20 candidate passages from 313 indexed chunks, then a cross-encoder reranks them to the best 5." },
@@ -19,6 +19,7 @@ const STYLE: Record<NodeState, string> = {
   taken: "border-line-bright bg-raised text-text",
   rejected: "border-line text-faint opacity-40",
   skipped: "border-line text-faint opacity-40",
+  failed: "border-alert/40 bg-alert/8 text-alert",
 };
 
 function statesFor(msg: ChatMessage | null, busy: boolean): Record<string, NodeState> {
@@ -28,6 +29,19 @@ function statesFor(msg: ChatMessage | null, busy: boolean): Record<string, NodeS
   if (!msg?.outcome) {
     return { retrieve: "idle", judge: "idle", rewrite: "idle", answer: "idle", escalate: "idle" };
   }
+  // On an outage no judge ran, so there was no routing decision to show. The
+  // handoff still happened, but it was a fallback, not a verdict — marking the
+  // judge "done" here would claim the system weighed something it never saw.
+  if (msg.outcome === "unavailable" || msg.outcome === "error") {
+    return {
+      retrieve: "done",
+      judge: "failed",
+      rewrite: "skipped",
+      answer: "skipped",
+      escalate: "taken",
+    };
+  }
+
   const retried = (msg.attempts ?? 1) > 1;
   const answered = msg.outcome === "answered";
   return {
@@ -42,6 +56,7 @@ function statesFor(msg: ChatMessage | null, busy: boolean): Record<string, NodeS
 export function PipelineTrace({ latest, busy }: { latest: ChatMessage | null; busy: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const states = statesFor(latest, busy);
+  const timings = latest?.timings;
 
   return (
     <div className="flex flex-col gap-1 p-4">
@@ -71,12 +86,16 @@ export function PipelineTrace({ latest, busy }: { latest: ChatMessage | null; bu
               onClick={() => setOpen(isOpen ? null : node.id)}
               className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-hover active:scale-[0.98] ${STYLE[state]}`}
             >
-              <StatusDot tone={on ? "silver" : "idle"} active={live} />
+              <StatusDot
+                tone={state === "failed" ? "alert" : on ? "silver" : "idle"}
+                active={live}
+              />
               <span className="text-[0.82rem] font-medium">{node.label}</span>
-              <span className="ml-auto font-mono text-[0.62rem] text-faint">
-                {state === "taken" && "●"}
-                {state === "done" && "●"}
-                {(state === "rejected" || state === "skipped") && "○"}
+              <span className="ml-auto flex items-center gap-2 font-mono text-[0.62rem] text-faint tabular-nums">
+                {timings?.[node.id] != null && on && (
+                  <span>{(timings[node.id] / 1000).toFixed(1)}s</span>
+                )}
+                {state === "failed" ? "✕" : on ? "●" : state === "idle" || state === "active" ? "" : "○"}
               </span>
             </button>
 

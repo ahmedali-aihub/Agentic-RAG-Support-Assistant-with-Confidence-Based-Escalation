@@ -1,7 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.graph.confidence import format_chunks_for_prompt
-from app.graph.state import GraphState
+from app.graph.state import GraphState, timed
 from app.llm import AllModelsFailed, invoke_with_fallback
 
 SYSTEM_PROMPT = """You are a helpful customer support assistant for Stripe. Answer the \
@@ -14,6 +14,7 @@ Rules:
 """
 
 
+@timed("answer")
 def generate_answer(state: GraphState) -> GraphState:
     question = state["question"]
     chunks = state.get("chunks", [])

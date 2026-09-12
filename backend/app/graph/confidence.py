@@ -1,10 +1,13 @@
 import json
+import logging
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.config import settings
-from app.graph.state import GraphState
+from app.graph.state import GraphState, timed
 from app.llm import AllModelsFailed, invoke_with_fallback
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a strict judge deciding whether retrieved documentation excerpts are \
 sufficient to answer a customer's support question accurately and completely.
@@ -54,6 +57,7 @@ def parse_judgement(raw: str) -> dict:
     }
 
 
+@timed("judge")
 def check_confidence(state: GraphState) -> GraphState:
     question = state["question"]
     chunks = state.get("chunks", [])
@@ -71,10 +75,16 @@ def check_confidence(state: GraphState) -> GraphState:
     except AllModelsFailed as exc:
         # No model could judge this, so we cannot claim confidence. Escalating
         # is the safe outcome for a support bot.
+        logger.warning("Confidence check unavailable: %s", exc)
         return {
             **state,
             "confidence_score": 0.0,
-            "confidence_reasoning": f"Confidence check unavailable: {exc}",
+            # The full model-by-model failure goes to the log; the reader gets a
+            # sentence, not a stack of 429s.
+            "confidence_reasoning": (
+                "The answering service was unreachable, so the retrieved passages "
+                "were never assessed."
+            ),
             "is_confident": False,
             "judge_model": None,
         }

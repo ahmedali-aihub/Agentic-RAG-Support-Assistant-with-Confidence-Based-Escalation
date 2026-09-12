@@ -61,10 +61,16 @@ export default function App() {
                 citations: res.citations,
                 // A confidence score only means something when a judge ran.
                 confidenceScore: outcome === "unavailable" ? null : res.confidence_score,
+                confidenceReasoning:
+                  outcome === "unavailable" ? null : res.confidence_reasoning,
                 escalationId: res.escalation_id,
                 servedBy: res.served_by,
                 attempts: res.attempts,
                 rewrittenQuery: res.rewritten_query,
+                timings: res.timings,
+                chunksConsidered: res.chunks_considered,
+                chunksUsed: res.chunks_used,
+                topRelevance: res.top_relevance,
                 elapsedMs: performance.now() - started,
               }
             : m

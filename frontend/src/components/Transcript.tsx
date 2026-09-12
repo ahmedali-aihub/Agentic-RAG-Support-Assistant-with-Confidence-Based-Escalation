@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Metrics } from "./Metrics";
 import { Eyebrow, StatusDot, StreamingText } from "./Primitives";
 import type { ChatMessage, Outcome } from "../types";
 
@@ -149,6 +150,8 @@ export function Transcript({
               </p>
 
               {typeof m.confidenceScore === "number" && <Confidence score={m.confidenceScore} />}
+
+              <Metrics message={m} />
 
               {!!m.citations?.length && (
                 <div className="flex flex-col gap-2">

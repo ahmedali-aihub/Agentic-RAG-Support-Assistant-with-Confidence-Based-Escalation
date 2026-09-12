@@ -1,11 +1,36 @@
+import logging
+import time
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.schemas import AskRequest, AskResponse, TicketOut
+from app.config import settings
 from app.graph.builder import run_query
 from app.graph.escalation import list_tickets
+from app.graph.retriever import get_reranker, get_vectorstore
 
-app = FastAPI(title="Agentic RAG Support Agent")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Load the embedding and reranker models before serving.
+
+    Both are lazy singletons, so without this the first request pays roughly 50
+    seconds of model loading -- which looks like a slow agent rather than a cold
+    start, and is the single largest latency in the system.
+    """
+    start = time.perf_counter()
+    get_vectorstore().similarity_search("warmup", k=1)
+    if settings.rerank_enabled:
+        get_reranker().predict([("warmup", "warmup")])
+    logger.info("Models warm in %.1fs", time.perf_counter() - start)
+    yield
+
+
+app = FastAPI(title="Agentic RAG Support Agent", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,16 +48,27 @@ def health():
 @app.post("/ask", response_model=AskResponse)
 def ask(request: AskRequest):
     result = run_query(request.question)
+
+    chunks = result.get("chunks", [])
+    scores = [c["rerank_score"] for c in chunks if c.get("rerank_score") is not None]
+    attempts = result.get("attempt", 1)
+
     return AskResponse(
         answer=result.get("answer", ""),
         escalated=result.get("path_taken") == "escalated",
         citations=result.get("citations", []),
         confidence_score=result.get("confidence_score"),
+        confidence_reasoning=result.get("confidence_reasoning"),
         escalation_id=result.get("escalation_id"),
         escalation_reason=result.get("escalation_reason"),
         served_by=result.get("answer_model") or result.get("judge_model"),
-        attempts=result.get("attempt", 1),
+        attempts=attempts,
         rewritten_query=result.get("rewritten_query"),
+        timings=result.get("timings", {}),
+        # Each attempt pulls its own candidate pool before reranking.
+        chunks_considered=settings.retrieval_candidate_k * attempts,
+        chunks_used=len(chunks),
+        top_relevance=max(scores) if scores else None,
     )
 
 

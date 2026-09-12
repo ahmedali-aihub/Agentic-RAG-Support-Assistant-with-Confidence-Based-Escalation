@@ -7,7 +7,7 @@ from threading import Lock
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.graph.confidence import format_chunks_for_prompt
-from app.graph.state import GraphState
+from app.graph.state import GraphState, timed
 from app.llm import AllModelsFailed, invoke_with_fallback
 
 QUEUE_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "human_queue.json"
@@ -47,6 +47,7 @@ def list_tickets() -> list[dict]:
         return _read_queue()
 
 
+@timed("escalate")
 def escalate(state: GraphState) -> GraphState:
     question = state["question"]
     chunks = state.get("chunks", [])
