@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from itertools import count
 from typing import Callable, TypeVar
 
 from langchain_core.messages import BaseMessage
@@ -33,6 +34,40 @@ def _build_one(model: str, temperature: float) -> ChatOpenAI:
     )
 
 
+class QuotaExhausted(AllModelsFailed):
+    """The account's shared free-model budget is spent; no model can serve."""
+
+
+_calls = count()
+
+
+def _rotated_chain() -> list[str]:
+    """The chain, starting one position further along on each call.
+
+    Always starting at the head sends every request to the same model until it
+    breaks, which concentrates load and makes one model's per-minute throttling
+    everyone's problem. Rotating spreads calls across the chain while keeping
+    the full list available as fallback.
+    """
+    chain = settings.model_chain
+    if len(chain) < 2:
+        return chain
+    offset = next(_calls) % len(chain)
+    return chain[offset:] + chain[:offset]
+
+
+def _is_account_quota_error(exc: Exception) -> bool:
+    """True when the failure is the account-wide free-tier cap.
+
+    OpenRouter meters free models against one daily account budget rather than
+    per model, so this failure means every remaining model in the chain will
+    fail identically. Distinguishing it from a single model being down is what
+    lets the chain keep trying in one case and stop immediately in the other.
+    """
+    text = str(exc)
+    return "429" in text and "free-models-per-day" in text
+
+
 def invoke_with_fallback(
     messages: list[BaseMessage],
     temperature: float = 0.0,
@@ -40,20 +75,34 @@ def invoke_with_fallback(
 ) -> tuple[T | str, str]:
     """Try each free model in order; return the first usable result.
 
-    Free OpenRouter models are rate-limited and intermittently unavailable, so a
-    single model isn't dependable. A model is skipped both when the call raises
-    (429, 5xx, timeout) and when `parse` rejects its output — a model that
-    answers with prose where JSON was required is as useless here as one that
-    is down.
+    Individual free models go down, get overloaded, or return output that can't
+    be parsed, so the chain walks past any model that fails for a reason another
+    model might not share — including output `parse` rejects, since a model that
+    answers in prose where JSON was required is as useless as one that is down.
+
+    The exception is the account-wide daily cap: every model draws on the same
+    budget, so once that is spent the chain stops rather than spending a minute
+    collecting the same refusal sixteen times.
 
     Returns (result, model_id) so callers can record which model answered.
     """
     errors: list[str] = []
 
-    for model in settings.model_chain:
+    for model in _rotated_chain():
         try:
             response = _build_one(model, temperature).invoke(messages)
         except Exception as exc:
+            if _is_account_quota_error(exc):
+                logger.warning(
+                    "Free-tier daily quota exhausted at %s; the rest of the chain "
+                    "shares the same budget, so it is skipped",
+                    model,
+                )
+                raise QuotaExhausted(
+                    "OpenRouter's shared free-model daily quota is exhausted. "
+                    "Every model in the chain draws on the same budget, so none "
+                    "can serve until it resets."
+                ) from exc
             errors.append(f"{model}: {type(exc).__name__}: {exc}")
             logger.warning("Model %s failed: %s", model, exc)
             continue

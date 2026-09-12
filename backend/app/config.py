@@ -1,15 +1,33 @@
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Free OpenRouter models, tried in order. Ordered by how much we trust them to
-# follow the judge's JSON contract: models advertising structured-output support
-# come first, then general text models, with OpenRouter's auto-router last.
+# Every free OpenRouter model that can do general text QA, tried in order.
+# Models advertising structured-output support come first, since the confidence
+# judge must return parseable JSON; the rest follow by general capability.
+#
+# Worth knowing: OpenRouter's free-tier daily cap is account-wide, not per
+# model. A long chain does not multiply the daily budget -- it buys resilience
+# against a single model being down, overloaded or refusing a prompt, which
+# happens independently of quota.
 DEFAULT_FREE_MODEL_CHAIN = [
+    # Structured-output capable — preferred for the JSON judge.
     "nvidia/nemotron-3-super-120b-a12b:free",
     "nex-agi/nex-n2.5-pro:free",
-    "google/gemma-4-31b-it:free",
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "dots-studio/dots-3-note-preview:free",
     "nex-agi/nex-n2.5-mini:free",
+    "liquid/lfm-2.5-2.6b:free",
+    # Large general models.
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "thinkingmachines/inkling:free",
+    "google/gemma-4-31b-it:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "nvidia/nemotron-3.5-lightning:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "thinkingmachines/inkling-small:free",
+    "inclusionai/ling-3.0-flash-vl:free",
+    "poolside/laguna-s-2.1:free",
+    "poolside/laguna-xs-2.1:free",
+    # Auto-router last: it picks among free models itself.
     "openrouter/free",
 ]
 
