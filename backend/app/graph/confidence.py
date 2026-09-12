@@ -95,4 +95,19 @@ def check_confidence(state: GraphState) -> GraphState:
 
 
 def route_on_confidence(state: GraphState) -> str:
-    return "answer" if state.get("is_confident") else "escalate"
+    """Answer, retry the search once, or hand off to a human.
+
+    The single retry is what makes this a loop rather than a straight pipeline:
+    a question can fail on vocabulary alone, and rewriting it is cheaper than a
+    human's time. Bounded at one retry so a bad question can't spin.
+    """
+    if state.get("is_confident"):
+        return "answer"
+
+    judge_ran = state.get("judge_model") is not None
+    first_try = state.get("attempt", 1) == 1
+
+    if settings.query_rewrite_enabled and first_try and judge_ran:
+        return "rewrite"
+
+    return "escalate"

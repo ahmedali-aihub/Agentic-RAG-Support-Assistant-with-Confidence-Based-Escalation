@@ -10,6 +10,8 @@ class ChunkInfo(TypedDict):
 class GraphState(TypedDict, total=False):
     question: str
     chunks: list[ChunkInfo]
+    attempt: int
+    rewritten_query: str
     is_confident: bool
     confidence_score: float
     confidence_reasoning: str

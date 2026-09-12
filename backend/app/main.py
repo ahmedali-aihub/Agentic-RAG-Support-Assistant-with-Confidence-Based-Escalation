@@ -31,6 +31,8 @@ def ask(request: AskRequest):
         escalation_id=result.get("escalation_id"),
         escalation_reason=result.get("escalation_reason"),
         served_by=result.get("answer_model") or result.get("judge_model"),
+        attempts=result.get("attempt", 1),
+        rewritten_query=result.get("rewritten_query"),
     )
 
 

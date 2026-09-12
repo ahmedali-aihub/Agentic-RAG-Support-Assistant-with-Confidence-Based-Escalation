@@ -8,6 +8,8 @@ export interface AskResponse {
   escalation_id: string | null;
   escalation_reason: EscalationReason | null;
   served_by: string | null;
+  attempts: number | null;
+  rewritten_query: string | null;
 }
 
 export type Outcome = "answered" | "escalated" | "unavailable" | "error";
@@ -21,6 +23,8 @@ export interface ChatMessage {
   confidenceScore?: number | null;
   escalationId?: string | null;
   servedBy?: string | null;
+  attempts?: number | null;
+  rewrittenQuery?: string | null;
   pending?: boolean;
   elapsedMs?: number;
 }

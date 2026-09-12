@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
+import { SendIcon } from "./Icons";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -8,6 +9,7 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [value, setValue] = useState("");
+  const [focused, setFocused] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   function resize() {
@@ -39,36 +41,31 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
 
   return (
     <form className="composer" onSubmit={handleSubmit}>
-      <textarea
-        id="question-input"
-        ref={taRef}
-        rows={1}
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          resize();
-        }}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask about refunds, webhooks, test cards, payouts…"
-        disabled={disabled}
-        aria-label="Your question"
-      />
+      <div className={`field${focused ? " field--focused" : ""}`}>
+        <textarea
+          id="question-input"
+          ref={taRef}
+          rows={1}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            resize();
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about refunds, webhooks, test cards, payouts…"
+          disabled={disabled}
+          aria-label="Your question"
+        />
+        <kbd className="hint">Enter</kbd>
+      </div>
+
       <button type="submit" className="send" disabled={disabled || !value.trim()}>
-        {disabled ? (
-          <span className="spinner" aria-hidden="true" />
-        ) : (
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              d="M3 10h13M11 5l5 5-5 5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-        <span className="send-label">{disabled ? "Working" : "Send"}</span>
+        <span className="send-face">
+          {disabled ? <span className="spinner" /> : <SendIcon className="send-svg" />}
+          <span className="send-label">{disabled ? "Working" : "Send"}</span>
+        </span>
       </button>
     </form>
   );

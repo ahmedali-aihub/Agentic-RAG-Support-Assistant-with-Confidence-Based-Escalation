@@ -15,6 +15,8 @@ class AskResponse(BaseModel):
     escalation_reason: str | None = None
     # Named without a `model_` prefix to stay clear of Pydantic's protected namespace.
     served_by: str | None = None
+    attempts: int | None = None
+    rewritten_query: str | None = None
 
 
 class TicketOut(BaseModel):

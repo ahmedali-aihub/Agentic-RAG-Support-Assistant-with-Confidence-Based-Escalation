@@ -1,0 +1,197 @@
+[
+  {
+    "question": "I received a 402 error from the API\u2014what does that indicate?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/api/authentication",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "When I set cancel_at_period_end to true to cancel a subscription at the end of the billing period, will my customer still be charged for any pending invoice items or usage that occurs before the cancellation takes effect?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/billing/subscriptions/cancel",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "my subscription status is unpaid\u2014what does that mean and how can I make it active again?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/billing/subscriptions/overview",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How do I create a trial offer with curl and will my subscription be in trialling status if the trial price is set to zero?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/billing/subscriptions/trials",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How can I set the processing fees that my platform charges to connected accounts?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/connect",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How do I offer a coupon to customers who are trying to cancel their subscription and collect their reasons for cancelling?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/customer-management",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "I received a decline with the code\u202fexpired_card\u2014what does that indicate about the payment?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/declines",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How can I create a Starter Subscription product and its price using the Stripe Ruby library in my sandbox environment?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/development/quickstart",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How can I automatically prevent disputes using Verifi and Ethoca programs?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/disputes",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "I tried to capture a charge but got an error saying the charge has not been authorised for capturing payment\u2014what does that mean?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/error-codes",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "Can I create an invoice in Stripe and have it automatically charge my customer\u2019s saved payment method?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/invoicing/overview",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How do I create a restricted API key with specific permissions in Stripe?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/keys",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "What should I use to reliably send order confirmations and start fulfillment after a Checkout payment instead of relying on the success page?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/payments/accept-a-payment",
+    "generated_by": "nex-agi/nex-n2.5-pro:free"
+  },
+  {
+    "question": "How can I save my customers' payment details after they pay so I can charge them again for future purchases?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/payments/checkout",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How can I fetch the client secret from my server endpoint using JavaScript fetch in a React single\u2011page application?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/payments/payment-intents",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "How many business days does SEPA Direct Debit take to settle in Stripe?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/payouts",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "I got an email from Stripe asking for my bank information to complete a refund\u2014what does that mean and what happens if I don\u2019t reply?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/refunds",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "Does Stripe ever expose my customers' full card numbers to its internal servers or employees?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/security",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "Which test one\u2011time passcode should I enter to get a \"code expired\" error when authenticating a sandbox account?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/testing",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "Why am I getting an \"Invalid payload\" or signature verification error when processing Stripe webhooks in my Ruby Sinatra app?",
+    "expected": "answer",
+    "source_url": "https://docs.stripe.com/webhooks",
+    "generated_by": "nvidia/nemotron-3-super-120b-a12b:free"
+  },
+  {
+    "question": "Why did my payout pay_9f8e7d fail last night?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Can you cancel my subscription sub_1A2B3C right now?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Why was my account flagged for review last Tuesday?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "How much money is in my Stripe balance today?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Why did charge ch_3PqR2s get refunded without my approval?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Can you reactivate my suspended Stripe account?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "What is the email address on file for my account?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Does my business need a money transmitter license?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Am I liable if a customer disputes a charge I already shipped?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Should I register for VAT before accepting EU payments?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "How do I connect this to my Shopify store's inventory system?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "Is PayPal cheaper than Stripe for my business?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "What is the weather in San Francisco today?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "How much revenue did Stripe make last quarter?",
+    "expected": "escalate",
+    "source_url": null
+  },
+  {
+    "question": "How many customers does Stripe have right now?",
+    "expected": "escalate",
+    "source_url": null
+  }
+]

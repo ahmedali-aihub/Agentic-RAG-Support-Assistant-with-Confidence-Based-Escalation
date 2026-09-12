@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 5
     confidence_threshold: float = 0.6
 
+    # Reranking: pull a wider pool from the vector store, then let a local
+    # cross-encoder pick the best. Runs offline, so it costs no API quota.
+    rerank_enabled: bool = True
+    retrieval_candidate_k: int = 20
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+    # One retry: on low confidence, rewrite the query and retrieve again before
+    # giving up and escalating.
+    query_rewrite_enabled: bool = True
+
     @field_validator("openrouter_models")
     @classmethod
     def _strip(cls, v: str) -> str:
