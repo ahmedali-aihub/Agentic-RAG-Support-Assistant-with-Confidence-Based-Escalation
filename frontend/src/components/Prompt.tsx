@@ -16,7 +16,10 @@ export function Prompt({
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
+    // Floored at one line so a single-line field matches the send button's
+    // height exactly, and capped so a long question scrolls instead of
+    // pushing the transcript off screen.
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 24), 132)}px`;
   }
 
   function submit() {
@@ -43,7 +46,7 @@ export function Prompt({
     <div className="shrink-0 px-4 pt-2 pb-5">
       <form onSubmit={onSubmit} className="mx-auto flex w-full max-w-3xl items-end gap-2.5">
         <div
-          className={`flex flex-1 items-end rounded-2xl border bg-raised transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+          className={`flex min-h-12 flex-1 items-center rounded-2xl border bg-raised transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             focused ? "border-line-bright bevel-lift" : "border-line bevel"
           }`}
         >
@@ -62,14 +65,14 @@ export function Prompt({
             disabled={disabled}
             aria-label="Your question"
             placeholder="Ask about refunds, webhooks, test cards, payouts…"
-            className="flex-1 resize-none bg-transparent px-4 py-3.5 text-[0.92rem] leading-relaxed text-text outline-none placeholder:text-faint disabled:opacity-50"
+            className="flex-1 resize-none bg-transparent px-4 py-3 text-[0.92rem] leading-6 text-text outline-none placeholder:text-faint disabled:opacity-50"
           />
         </div>
 
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="group grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-silver text-black transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white hover:bevel-lift active:scale-[0.93] disabled:bg-raised disabled:text-faint disabled:cursor-not-allowed"
+          className="group grid aspect-square h-12 w-12 shrink-0 place-items-center self-end rounded-2xl bg-silver text-black shadow-[0_2px_10px_-3px_rgba(232,232,237,0.5)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white hover:shadow-[0_4px_18px_-4px_rgba(255,255,255,0.6)] active:scale-[0.93] disabled:border disabled:border-line disabled:bg-transparent disabled:text-faint disabled:shadow-none disabled:cursor-not-allowed"
           aria-label={disabled ? "Working" : "Send"}
         >
           {disabled ? (
