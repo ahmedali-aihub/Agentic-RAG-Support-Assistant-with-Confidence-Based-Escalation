@@ -169,6 +169,118 @@ button {
   -webkit-text-fill-color: transparent;
 }
 
+/* Send button.
+   A flat white square on black reads as a placeholder rather than a control,
+   so this is built as a physical key: a metal face with a lit top edge, a rim
+   that catches light, and a halo that grows on hover. */
+.send-btn {
+  flex: none;
+  align-self: flex-end;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #4a4a52 0%, #26262b 100%);
+  cursor: pointer;
+  transition:
+    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 3px 10px -3px rgba(0, 0, 0, 0.8);
+}
+
+/* Inner face, inset so the outer element reads as a bezel around it. */
+.send-btn__face {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  color: #0a0a0c;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e2e8 46%, #b9b9c2 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  transition:
+    background 0.28s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.send-btn__arrow {
+  width: 19px;
+  height: 19px;
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 6px 20px -6px rgba(255, 255, 255, 0.4),
+    0 4px 14px -4px rgba(0, 0, 0, 0.85);
+}
+.send-btn:hover:not(:disabled) .send-btn__face {
+  background: linear-gradient(180deg, #ffffff 0%, #f2f2f6 50%, #d6d6de 100%);
+}
+.send-btn:hover:not(:disabled) .send-btn__arrow {
+  transform: translateX(2px);
+}
+
+.send-btn:focus-visible {
+  outline: 2px solid var(--color-silver);
+  outline-offset: 3px;
+}
+
+.send-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.95);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 1px 4px -1px rgba(0, 0, 0, 0.9);
+}
+/* Press inverts the face's lighting, so the key reads as pushed in. */
+.send-btn:active:not(:disabled) .send-btn__face {
+  background: linear-gradient(180deg, #c9c9d2 0%, #e8e8ee 100%);
+  transform: scale(0.985);
+}
+
+/* Unavailable, not absent: an outline holds the button's place. */
+.send-btn:disabled {
+  cursor: not-allowed;
+  background: transparent;
+  box-shadow: none;
+}
+.send-btn:disabled .send-btn__face {
+  color: var(--color-faint);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+
+/* Busy keeps the metal face, dimmed, so the spinner has something to read
+   against and the control still looks present rather than switched off. */
+.send-btn--busy:disabled {
+  background: linear-gradient(180deg, #4a4a52 0%, #26262b 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 3px 10px -3px rgba(0, 0, 0, 0.8);
+  cursor: wait;
+}
+.send-btn--busy:disabled .send-btn__face {
+  color: #3a3a42;
+  background: linear-gradient(180deg, #d8d8de 0%, #a8a8b2 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.send-btn__spinner {
+  width: 17px;
+  height: 17px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

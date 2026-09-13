@@ -72,26 +72,27 @@ export function Prompt({
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="group grid aspect-square h-12 w-12 shrink-0 place-items-center self-end rounded-2xl bg-silver text-black shadow-[0_2px_10px_-3px_rgba(232,232,237,0.5)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white hover:shadow-[0_4px_18px_-4px_rgba(255,255,255,0.6)] active:scale-[0.93] disabled:border disabled:border-line disabled:bg-transparent disabled:text-faint disabled:shadow-none disabled:cursor-not-allowed"
+          // Working and empty are both disabled, but only one is inert — the
+          // busy button keeps its metal face so the spinner reads against it.
+          className={`send-btn group${disabled ? " send-btn--busy" : ""}`}
           aria-label={disabled ? "Working" : "Send"}
         >
-          {disabled ? (
-            <span
-              className="inline-block h-4 w-4 rounded-full border-2 border-current border-r-transparent"
-              style={{ animation: "spin 0.8s linear infinite" }}
-            />
-          ) : (
-            <svg viewBox="0 0 20 20" className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true">
-              <path
-                d="M3.5 10h12M10.5 5l5 5-5 5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
+          <span className="send-btn__face">
+            {disabled ? (
+              <span className="send-btn__spinner" />
+            ) : (
+              <svg viewBox="0 0 20 20" className="send-btn__arrow" aria-hidden="true">
+                <path
+                  d="M4 10h11M10 5l5 5-5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
         </button>
       </form>
     </div>
