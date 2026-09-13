@@ -4,8 +4,10 @@ import { PipelineTrace } from "./components/PipelineTrace";
 import { Eyebrow, Panel, StatusDot } from "./components/Primitives";
 import { Prompt } from "./components/Prompt";
 import { Telemetry } from "./components/Telemetry";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { Transcript } from "./components/Transcript";
 import type { ChatMessage, Outcome } from "./types";
+import { useTheme } from "./useTheme";
 
 const WELCOME: ChatMessage = {
   id: "welcome",
@@ -22,6 +24,7 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
   const [busy, setBusy] = useState(false);
   const streamRef = useRef<HTMLDivElement>(null);
+  const { theme, toggle } = useTheme();
 
   const stick = useCallback(() => {
     const el = streamRef.current;
@@ -134,11 +137,20 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 rounded-full border border-line bg-raised px-3 py-1.5">
-          <StatusDot tone={busy ? "silver" : "idle"} active={busy} />
-          <span className="text-[0.72rem] font-medium text-dim">
-            {busy ? "Working" : "Ready"}
-          </span>
+        <div className="flex items-center gap-2.5">
+          <a
+            href="#/"
+            className="text-[0.78rem] font-medium text-faint transition-colors duration-300 hover:text-text"
+          >
+            ← Overview
+          </a>
+          <div className="flex items-center gap-2.5 rounded-full border border-line bg-raised px-3 py-1.5">
+            <StatusDot tone={busy ? "silver" : "idle"} active={busy} />
+            <span className="text-[0.72rem] font-medium text-dim">
+              {busy ? "Working" : "Ready"}
+            </span>
+          </div>
+          <ThemeToggle theme={theme} onToggle={toggle} tone="console" />
         </div>
       </header>
 

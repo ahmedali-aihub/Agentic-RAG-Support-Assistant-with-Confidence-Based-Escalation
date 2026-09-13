@@ -10,6 +10,8 @@ import {
   IconRewrite,
   IconShield,
 } from "./TiIcons";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useTheme } from "../useTheme";
 import { useCountUp, useParallax, useReveal } from "./hooks";
 
 function Reveal({
@@ -65,6 +67,7 @@ const PIPELINE = [
 
 export default function Landing() {
   const y = useParallax();
+  const { theme, toggle } = useTheme();
 
   return (
     <div className="ti-ground min-h-svh text-ti-ink antialiased">
@@ -77,12 +80,15 @@ export default function Landing() {
             </span>
             <span className="text-[0.9rem] font-semibold tracking-[-0.02em]">Support Assistant</span>
           </span>
-          <a
-            href="#/app"
-            className="text-[0.84rem] font-medium text-ti-body transition-colors duration-300 hover:text-ti-ink"
-          >
-            Open console →
-          </a>
+          <span className="flex items-center gap-3">
+            <a
+              href="#/app"
+              className="text-[0.84rem] font-medium text-ti-body transition-colors duration-300 hover:text-ti-ink"
+            >
+              Open console →
+            </a>
+            <ThemeToggle theme={theme} onToggle={toggle} />
+          </span>
         </div>
       </header>
 

@@ -3,8 +3,8 @@
    layers so its @layer components rules land before the utilities. */
 @import "./landing/landing.css";
 
-/* Pure black ground with a platinum/silver range on top. Committed single
-   theme: the product is a dark console, and a light variant would undo it. */
+/* Pure black ground with a platinum/silver range on top — the console's
+   default. A light counterpart is defined further down for the theme switch. */
 @theme {
   --color-void: #000000;
   --color-panel: #0a0a0c;
@@ -47,12 +47,56 @@
   --color-ti-edge: rgba(28, 27, 25, 0.1);
 }
 
-/* The two surfaces are opposite themes; the route sets which ground paints. */
+/* Dark titanium: the same material in anodised finish rather than an inversion.
+   Only the token values change, so every component follows without knowing a
+   theme exists. Greys stay warm so the family still reads as one metal. */
+:root[data-theme="dark"] {
+  --color-ti-100: #242321;
+  --color-ti-200: #1a1918;
+  --color-ti-300: #211f1e;
+  --color-ti-400: #161514;
+  --color-ti-500: #46443f;
+  --color-ti-ink: #f4f2ef;
+  --color-ti-body: #b3afa8;
+  --color-ti-mute: #837f78;
+  --color-ti-ink2: #e8e5e0;
+  --color-ti-edge: rgba(255, 255, 255, 0.12);
+}
+
+/* Console in light finish. Warm off-whites rather than pure white, so it stays
+   in the same material family as the landing surface, and the semantic hues are
+   darkened to hold contrast against a bright ground. */
+:root[data-theme="light"] {
+  --color-void: #eceae7;
+  --color-panel: #f7f6f4;
+  --color-raised: #ffffff;
+  --color-hover: #f0eeeb;
+  --color-line: #dedbd6;
+  --color-line-bright: #c3bfb8;
+
+  --color-text: #1c1b19;
+  --color-dim: #55534f;
+  --color-faint: #85827d;
+
+  --color-silver: #3a3833;
+  --color-steel: #85827d;
+
+  --color-good: #1c7a41;
+  --color-warn: #9a6212;
+  --color-alert: #b3302a;
+}
+
+/* The landing surface paints its own ground; the route decides which. */
 :root[data-surface="landing"],
 :root[data-surface="landing"] body {
   color-scheme: light;
   background: var(--color-ti-200);
   color: var(--color-ti-ink);
+}
+
+:root[data-surface="landing"][data-theme="dark"],
+:root[data-surface="landing"][data-theme="dark"] body {
+  color-scheme: dark;
 }
 
 :root {
@@ -65,6 +109,15 @@
   background: var(--color-void);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Declared after the base so the light finish wins: form controls and native
+   scrollbars follow color-scheme, and would otherwise stay dark on a pale page. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-surface="landing"]:not([data-theme="dark"]) {
+  color-scheme: light;
 }
 
 * {
@@ -93,8 +146,20 @@ body {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 90% 52% at 50% -12%, rgba(255, 255, 255, 0.07), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 104%, rgba(255, 255, 255, 0.025), transparent 70%);
+    radial-gradient(ellipse 90% 52% at 50% -12%, var(--key-light), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 104%, var(--key-bounce), transparent 70%);
+}
+
+:root {
+  --key-light: rgba(255, 255, 255, 0.07);
+  --key-bounce: rgba(255, 255, 255, 0.025);
+}
+
+/* On a pale ground the light has to come off the surface, not through it, so
+   the glow inverts to a soft shadow at the edges. */
+:root[data-theme="light"] {
+  --key-light: rgba(255, 255, 255, 0.85);
+  --key-bounce: rgba(28, 27, 25, 0.035);
 }
 
 button {

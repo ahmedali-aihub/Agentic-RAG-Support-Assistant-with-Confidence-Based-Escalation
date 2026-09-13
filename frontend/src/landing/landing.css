@@ -1,7 +1,54 @@
 /* Titanium surface.
    Only what Tailwind cannot express lives here: the brushed ground, the glass
    material, and the reveal transition. Everything structural — layout, spacing,
-   type scale — is Tailwind, so nothing here competes with a utility class. */
+   type scale — is Tailwind, so nothing here competes with a utility class.
+
+   The two finishes are driven by variables rather than duplicated selectors, so
+   a rule is written once and the theme only swaps what light does to it. */
+
+:root {
+  --ti-sheen: rgba(255, 255, 255, 0.9);
+  --ti-grad: linear-gradient(158deg, #f2f1ee 0%, #e8e6e3 40%, #dcd9d5 70%, #d4d2ce 100%);
+  --ti-grain: rgba(255, 255, 255, 0.55);
+  --ti-grain-opacity: 0.45;
+
+  --ti-glass: linear-gradient(170deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%);
+  --ti-glass-sm: rgba(255, 255, 255, 0.5);
+  --ti-glass-border: rgba(255, 255, 255, 0.7);
+  --ti-glass-top: rgba(255, 255, 255, 0.95);
+  --ti-shadow: rgba(28, 27, 25, 0.2);
+  --ti-shadow-deep: rgba(28, 27, 25, 0.28);
+
+  --ti-accent-face: linear-gradient(180deg, #4a4844 0%, #2c2a27 100%);
+  --ti-accent-face-hover: linear-gradient(180deg, #55534e 0%, #35322e 100%);
+  --ti-accent-ink: #ffffff;
+
+  --ti-headline: linear-gradient(178deg, #22211e 0%, #3b3935 55%, #56534e 100%);
+}
+
+/* Anodised: the same metal in a dark finish. Light now comes off the surface
+   rather than through it, so the sheen and glass fills invert while the warm
+   grey family stays intact. */
+:root[data-theme="dark"] {
+  --ti-sheen: rgba(255, 255, 255, 0.07);
+  --ti-grad: linear-gradient(158deg, #232220 0%, #1c1b1a 42%, #161514 72%, #121110 100%);
+  --ti-grain: rgba(255, 255, 255, 0.05);
+  --ti-grain-opacity: 0.5;
+
+  --ti-glass: linear-gradient(170deg, rgba(255, 255, 255, 0.062) 0%, rgba(255, 255, 255, 0.026) 100%);
+  --ti-glass-sm: rgba(255, 255, 255, 0.045);
+  --ti-glass-border: rgba(255, 255, 255, 0.1);
+  --ti-glass-top: rgba(255, 255, 255, 0.09);
+  --ti-shadow: rgba(0, 0, 0, 0.55);
+  --ti-shadow-deep: rgba(0, 0, 0, 0.7);
+
+  /* On a dark ground the accent has to be the light surface to stay primary. */
+  --ti-accent-face: linear-gradient(180deg, #f6f4f1 0%, #d9d6d1 100%);
+  --ti-accent-face-hover: linear-gradient(180deg, #ffffff 0%, #e6e3de 100%);
+  --ti-accent-ink: #1a1918;
+
+  --ti-headline: linear-gradient(178deg, #ffffff 0%, #e4e1dc 52%, #b6b2ab 100%);
+}
 
 @layer components {
   /* Brushed finish: a broad sheen over the base gradient, with a fine vertical
@@ -13,8 +60,8 @@
     z-index: -2;
     pointer-events: none;
     background:
-      radial-gradient(ellipse 80% 46% at 50% -8%, rgba(255, 255, 255, 0.9), transparent 60%),
-      linear-gradient(158deg, #f2f1ee 0%, #e8e6e3 40%, #dcd9d5 70%, #d4d2ce 100%);
+      radial-gradient(ellipse 80% 46% at 50% -8%, var(--ti-sheen), transparent 60%),
+      var(--ti-grad);
   }
 
   .ti-ground::after {
@@ -23,11 +70,11 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    opacity: 0.45;
+    opacity: var(--ti-grain-opacity);
     background: repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.55) 0px,
-      rgba(255, 255, 255, 0.55) 1px,
+      var(--ti-grain) 0px,
+      var(--ti-grain) 1px,
       transparent 1px,
       transparent 3px
     );
@@ -36,54 +83,52 @@
 
   /* Frosted panel with a lit top hairline, so it rests on the metal. */
   .glass {
-    background: linear-gradient(
-      170deg,
-      rgba(255, 255, 255, 0.7) 0%,
-      rgba(255, 255, 255, 0.4) 100%
-    );
+    background: var(--ti-glass);
     backdrop-filter: blur(20px) saturate(1.5);
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--ti-glass-border);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      0 1px 2px rgba(28, 27, 25, 0.04),
-      0 14px 34px -16px rgba(28, 27, 25, 0.2);
+      inset 0 1px 0 var(--ti-glass-top),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 14px 34px -16px var(--ti-shadow);
   }
 
   .glass-sm {
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--ti-glass-sm);
     backdrop-filter: blur(14px) saturate(1.4);
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
-    border: 1px solid rgba(255, 255, 255, 0.68);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    border: 1px solid var(--ti-glass-border);
+    box-shadow: inset 0 1px 0 var(--ti-glass-top);
   }
 
   .glass-lift:hover {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      0 2px 4px rgba(28, 27, 25, 0.05),
-      0 24px 50px -20px rgba(28, 27, 25, 0.28);
+      inset 0 1px 0 var(--ti-glass-top),
+      0 2px 4px rgba(0, 0, 0, 0.05),
+      0 24px 50px -20px var(--ti-shadow-deep);
   }
 
-  /* Graphite: the single accent. A machined dark face, not a colour. */
+  /* Graphite in light, brushed aluminium in dark: whichever reads as primary
+     against the ground it sits on. */
   .graphite {
-    background: linear-gradient(180deg, #4a4844 0%, #2c2a27 100%);
+    color: var(--ti-accent-ink);
+    background: var(--ti-accent-face);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      0 2px 6px rgba(28, 27, 25, 0.22),
-      0 12px 26px -12px rgba(28, 27, 25, 0.5);
+      0 2px 6px var(--ti-shadow),
+      0 12px 26px -12px var(--ti-shadow-deep);
   }
   .graphite:hover {
-    background: linear-gradient(180deg, #55534e 0%, #35322e 100%);
+    background: var(--ti-accent-face-hover);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      0 4px 10px rgba(28, 27, 25, 0.24),
-      0 20px 38px -14px rgba(28, 27, 25, 0.55);
+      0 4px 10px var(--ti-shadow),
+      0 20px 38px -14px var(--ti-shadow-deep);
   }
 
-  /* Ink gradient on display type, so headlines read as milled rather than painted. */
+  /* Milled rather than painted: headlines carry a gradient, not a flat fill. */
   .ink {
-    background: linear-gradient(178deg, #22211e 0%, #3b3935 55%, #56534e 100%);
+    background: var(--ti-headline);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -108,8 +153,12 @@
 }
 
 @keyframes ti-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(44, 42, 39, 0); }
-  50% { box-shadow: 0 0 0 6px rgba(44, 42, 39, 0.07); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(128, 128, 128, 0); }
+  50% { box-shadow: 0 0 0 6px var(--ti-edge-pulse, rgba(44, 42, 39, 0.07)); }
+}
+
+:root[data-theme="dark"] {
+  --ti-edge-pulse: rgba(255, 255, 255, 0.09);
 }
 
 @media (prefers-reduced-motion: reduce) {
