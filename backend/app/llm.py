@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from functools import lru_cache
 from itertools import count
 from typing import Callable, TypeVar
@@ -15,57 +16,112 @@ T = TypeVar("T")
 
 
 class AllModelsFailed(RuntimeError):
-    """Every model in the chain failed or returned unusable output."""
-
-
-@lru_cache
-def _build_one(model: str, temperature: float) -> ChatOpenAI:
-    return ChatOpenAI(
-        model=model,
-        api_key=settings.openrouter_api_key,
-        base_url=settings.openrouter_base_url,
-        temperature=temperature,
-        timeout=settings.request_timeout_seconds,
-        max_retries=0,
-        default_headers={
-            "HTTP-Referer": "https://github.com/agentic-rag-support",
-            "X-Title": "Agentic RAG Support Agent",
-        },
-    )
+    """Every candidate in the chain failed or returned unusable output."""
 
 
 class QuotaExhausted(AllModelsFailed):
-    """The account's shared free-model budget is spent; no model can serve."""
+    """Every provider's free budget is spent; nothing can serve until reset."""
+
+
+@dataclass(frozen=True)
+class Candidate:
+    """One (provider, key, model) the chain can try.
+
+    Keys are separate entries rather than a property of the provider because a
+    daily quota belongs to an account: when one key is spent the same model on
+    another key is still worth trying.
+    """
+
+    provider: str
+    model: str
+    key: str
+    base_url: str
+    key_index: int
+
+    @property
+    def label(self) -> str:
+        # Never the key itself — these land in logs and API responses.
+        return f"{self.provider}[{self.key_index}]/{self.model}"
+
+
+def build_candidates() -> list[Candidate]:
+    """All provider/key/model combinations, best-quota-first.
+
+    Gemini's free tier is far larger than OpenRouter's 50-a-day, but OpenRouter
+    is tried first: it costs nothing to exhaust and keeps the scarcer allowance
+    in reserve rather than spending the generous one on every request.
+    """
+    out: list[Candidate] = []
+
+    for i, key in enumerate(settings.openrouter_keys, 1):
+        for model in settings.model_chain:
+            out.append(
+                Candidate("openrouter", model, key, settings.openrouter_base_url, i)
+            )
+
+    for i, key in enumerate(settings.gemini_keys, 1):
+        for model in settings.gemini_model_chain:
+            out.append(Candidate("gemini", model, key, settings.gemini_base_url, i))
+
+    return out
+
+
+@lru_cache(maxsize=256)
+def _client(provider: str, model: str, key: str, base_url: str, temperature: float) -> ChatOpenAI:
+    headers = (
+        {
+            "HTTP-Referer": "https://github.com/agentic-rag-support",
+            "X-Title": "Agentic RAG Support Agent",
+        }
+        if provider == "openrouter"
+        else None
+    )
+    return ChatOpenAI(
+        model=model,
+        api_key=key,
+        base_url=base_url,
+        temperature=temperature,
+        timeout=settings.request_timeout_seconds,
+        max_retries=0,
+        default_headers=headers,
+    )
+
+
+def _is_account_quota_error(exc: Exception) -> bool:
+    """True when the failure is a whole account's daily allowance, not one model.
+
+    Both providers meter free usage per account, so this failure means every
+    remaining model on that key will refuse identically. Telling it apart from a
+    single model being down is what lets the chain skip a spent account without
+    abandoning the accounts that still have budget.
+    """
+    text = str(exc).lower()
+    if "429" not in text and "resource_exhausted" not in text:
+        return False
+    return any(
+        marker in text
+        for marker in (
+            "free-models-per-day",  # OpenRouter
+            "quota",  # Gemini
+            "resource_exhausted",
+        )
+    )
 
 
 _calls = count()
 
 
-def _rotated_chain() -> list[str]:
-    """The chain, starting one position further along on each call.
+def _rotate(items: list[Candidate]) -> list[Candidate]:
+    """Advance the starting point each call so load spreads across the chain.
 
-    Always starting at the head sends every request to the same model until it
-    breaks, which concentrates load and makes one model's per-minute throttling
-    everyone's problem. Rotating spreads calls across the chain while keeping
-    the full list available as fallback.
+    Always starting at the head sends every request to one model until it
+    breaks, which concentrates load and makes that model's throttling everyone's
+    problem.
     """
-    chain = settings.model_chain
-    if len(chain) < 2:
-        return chain
-    offset = next(_calls) % len(chain)
-    return chain[offset:] + chain[:offset]
-
-
-def _is_account_quota_error(exc: Exception) -> bool:
-    """True when the failure is the account-wide free-tier cap.
-
-    OpenRouter meters free models against one daily account budget rather than
-    per model, so this failure means every remaining model in the chain will
-    fail identically. Distinguishing it from a single model being down is what
-    lets the chain keep trying in one case and stop immediately in the other.
-    """
-    text = str(exc)
-    return "429" in text and "free-models-per-day" in text
+    if len(items) < 2:
+        return items
+    offset = next(_calls) % len(items)
+    return items[offset:] + items[:offset]
 
 
 def invoke_with_fallback(
@@ -73,58 +129,72 @@ def invoke_with_fallback(
     temperature: float = 0.0,
     parse: Callable[[str], T] | None = None,
 ) -> tuple[T | str, str]:
-    """Try each free model in order; return the first usable result.
+    """Try each provider/key/model until one returns usable output.
 
-    Individual free models go down, get overloaded, or return output that can't
-    be parsed, so the chain walks past any model that fails for a reason another
-    model might not share — including output `parse` rejects, since a model that
-    answers in prose where JSON was required is as useless as one that is down.
+    A candidate is skipped when the call fails and also when `parse` rejects the
+    response — a model answering in prose where JSON was required is as useless
+    as one that is down.
 
-    The exception is the account-wide daily cap: every model draws on the same
-    budget, so once that is spent the chain stops rather than spending a minute
-    collecting the same refusal sixteen times.
-
-    Returns (result, model_id) so callers can record which model answered.
+    A spent daily allowance retires every remaining candidate on that key, since
+    they all draw on the same budget, while leaving other keys and providers to
+    be tried. Returns (result, label) so callers can record what answered.
     """
-    errors: list[str] = []
+    candidates = build_candidates()
+    if not candidates:
+        raise AllModelsFailed(
+            "No API keys configured. Set OPENROUTER_API_KEY or GEMINI_API_KEY in "
+            "backend/.env (comma-separate several keys to pool their quotas)."
+        )
 
-    for model in _rotated_chain():
+    errors: list[str] = []
+    spent_keys: set[tuple[str, int]] = set()
+
+    for cand in _rotate(candidates):
+        account = (cand.provider, cand.key_index)
+        if account in spent_keys:
+            continue
+
         try:
-            response = _build_one(model, temperature).invoke(messages)
+            response = _client(
+                cand.provider, cand.model, cand.key, cand.base_url, temperature
+            ).invoke(messages)
         except Exception as exc:
             if _is_account_quota_error(exc):
+                spent_keys.add(account)
                 logger.warning(
-                    "Free-tier daily quota exhausted at %s; the rest of the chain "
-                    "shares the same budget, so it is skipped",
-                    model,
+                    "%s daily allowance exhausted on key %d; skipping its remaining models",
+                    cand.provider,
+                    cand.key_index,
                 )
-                raise QuotaExhausted(
-                    "OpenRouter's shared free-model daily quota is exhausted. "
-                    "Every model in the chain draws on the same budget, so none "
-                    "can serve until it resets."
-                ) from exc
-            errors.append(f"{model}: {type(exc).__name__}: {exc}")
-            logger.warning("Model %s failed: %s", model, exc)
+                errors.append(f"{cand.provider}[{cand.key_index}]: daily quota exhausted")
+                continue
+            errors.append(f"{cand.label}: {type(exc).__name__}: {exc}")
+            logger.warning("%s failed: %s", cand.label, exc)
             continue
 
         text = (response.content or "").strip()
         if not text:
-            errors.append(f"{model}: empty response")
+            errors.append(f"{cand.label}: empty response")
             continue
 
         if parse is None:
-            return text, model
+            return text, cand.label
 
         try:
-            return parse(text), model
+            return parse(text), cand.label
         except Exception as exc:
-            errors.append(f"{model}: unusable output: {exc}")
-            logger.warning("Model %s returned unusable output: %s", model, exc)
+            errors.append(f"{cand.label}: unusable output: {exc}")
+            logger.warning("%s returned unusable output: %s", cand.label, exc)
             continue
 
-    raise AllModelsFailed(
-        "All models in the chain failed:\n" + "\n".join(errors)
-    )
+    accounts = {(c.provider, c.key_index) for c in candidates}
+    if spent_keys >= accounts:
+        raise QuotaExhausted(
+            "Every configured account's free daily allowance is exhausted. "
+            "Add another key, or wait for the quotas to reset."
+        )
+
+    raise AllModelsFailed("All candidates failed:\n" + "\n".join(errors))
 
 
 @lru_cache

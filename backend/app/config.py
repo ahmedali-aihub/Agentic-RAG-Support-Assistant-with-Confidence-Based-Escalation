@@ -6,9 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # judge must return parseable JSON; the rest follow by general capability.
 #
 # Worth knowing: OpenRouter's free-tier daily cap is account-wide, not per
-# model. A long chain does not multiply the daily budget -- it buys resilience
-# against a single model being down, overloaded or refusing a prompt, which
-# happens independently of quota.
+# model. A long chain does not multiply one account's daily budget -- it buys
+# resilience against a single model being down, overloaded or refusing a
+# prompt. Extra budget comes from extra accounts and other providers.
 DEFAULT_FREE_MODEL_CHAIN = [
     # Structured-output capable — preferred for the JSON judge.
     "nvidia/nemotron-3-super-120b-a12b:free",
@@ -31,15 +31,32 @@ DEFAULT_FREE_MODEL_CHAIN = [
     "openrouter/free",
 ]
 
+# Gemini's own free tier, largest daily allowance first.
+DEFAULT_GEMINI_MODEL_CHAIN = [
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash",
+]
+
+
+def _split(raw: str) -> list[str]:
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    openrouter_api_key: str
+    # OpenRouter. Several keys may be given comma-separated: each account has
+    # its own daily free-model budget, so a second key is genuinely more
+    # capacity rather than another way to hit the same wall.
+    openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-
-    # Comma-separated in .env; falls back to the curated free chain above.
     openrouter_models: str = ""
+
+    # Google Gemini, through its OpenAI-compatible endpoint so the same client
+    # works for both providers. Also accepts several comma-separated keys.
+    gemini_api_key: str = ""
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
+    gemini_models: str = ""
 
     request_timeout_seconds: float = 60.0
 
@@ -61,16 +78,30 @@ class Settings(BaseSettings):
     # giving up and escalating.
     query_rewrite_enabled: bool = True
 
-    @field_validator("openrouter_models")
+    @field_validator("openrouter_api_key", "gemini_api_key", "openrouter_models", "gemini_models")
     @classmethod
     def _strip(cls, v: str) -> str:
         return v.strip()
 
     @property
+    def openrouter_keys(self) -> list[str]:
+        return _split(self.openrouter_api_key)
+
+    @property
+    def gemini_keys(self) -> list[str]:
+        return _split(self.gemini_api_key)
+
+    @property
     def model_chain(self) -> list[str]:
         if not self.openrouter_models:
             return DEFAULT_FREE_MODEL_CHAIN
-        return [m.strip() for m in self.openrouter_models.split(",") if m.strip()]
+        return _split(self.openrouter_models)
+
+    @property
+    def gemini_model_chain(self) -> list[str]:
+        if not self.gemini_models:
+            return DEFAULT_GEMINI_MODEL_CHAIN
+        return _split(self.gemini_models)
 
 
 settings = Settings()
