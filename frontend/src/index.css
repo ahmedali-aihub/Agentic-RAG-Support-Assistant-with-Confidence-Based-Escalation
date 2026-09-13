@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Imported here, not from a component: this must sit next to Tailwind's own
+   layers so its @layer components rules land before the utilities. */
+@import "./landing/landing.css";
 
 /* Pure black ground with a platinum/silver range on top. Committed single
    theme: the product is a dark console, and a light variant would undo it. */
@@ -39,8 +42,9 @@
   --color-ti-ink: #1c1b19;
   --color-ti-body: #55534f;
   --color-ti-mute: #85827d;
-  --color-ti-blue: #5b7a99;
-  --color-ti-blue-deep: #44607a;
+  /* Graphite, the single accent — a machined dark, not a colour. */
+  --color-ti-ink2: #2c2a27;
+  --color-ti-edge: rgba(28, 27, 25, 0.1);
 }
 
 /* The two surfaces are opposite themes; the route sets which ground paints. */
