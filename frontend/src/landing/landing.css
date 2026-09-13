@@ -1,0 +1,253 @@
+/* Titanium surface. Everything here is scoped under .ti so the console's dark
+   palette is untouched. */
+
+.ti {
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  position: relative;
+  min-height: 100svh;
+  color: var(--color-ti-ink);
+  letter-spacing: -0.018em;
+  isolation: isolate;
+}
+
+/* Brushed finish: a broad diagonal sheen over the base gradient, plus a very
+   fine vertical grain — the way light falls across a machined panel. */
+.ti::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 78% 46% at 50% -6%, rgba(255, 255, 255, 0.85), transparent 62%),
+    radial-gradient(ellipse 60% 40% at 88% 22%, rgba(91, 122, 153, 0.09), transparent 68%),
+    linear-gradient(157deg, #f2f1ee 0%, #e8e6e3 38%, #dcd9d5 68%, #d4d2ce 100%);
+}
+
+.ti::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.5) 0px,
+    rgba(255, 255, 255, 0.5) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mask-image: linear-gradient(180deg, #000 0%, transparent 55%);
+}
+
+.ti-shell {
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+/* ── Glass ─────────────────────────────────────────────────────────────────
+   Frosted panel with a lit top hairline, so it sits on the metal rather than
+   floating over it. */
+.glass {
+  background: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.42) 100%
+  );
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(28, 27, 25, 0.04),
+    0 12px 32px -14px rgba(28, 27, 25, 0.18);
+}
+
+.glass-tight {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.lift {
+  transition:
+    transform 0.55s var(--ease),
+    box-shadow 0.55s var(--ease),
+    background 0.55s var(--ease);
+}
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 4px rgba(28, 27, 25, 0.05),
+    0 22px 46px -18px rgba(28, 27, 25, 0.26);
+}
+
+/* ── Type ──────────────────────────────────────────────────────────────── */
+
+.display {
+  font-weight: 600;
+  letter-spacing: -0.042em;
+  line-height: 1.03;
+  text-wrap: balance;
+  background: linear-gradient(178deg, #24231f 0%, #3c3a36 52%, #55534f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.numeral {
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(178deg, #2a2925 0%, #4b4945 60%, #6d6a65 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.eyebrow-ti {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-ti-mute);
+}
+
+/* ── Controls ──────────────────────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding-inline: 30px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    transform 0.42s var(--ease),
+    box-shadow 0.42s var(--ease),
+    background 0.42s var(--ease);
+}
+
+.pill-solid {
+  color: #fff;
+  background: linear-gradient(180deg, #6d8aa8 0%, var(--color-ti-blue) 48%, var(--color-ti-blue-deep) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 2px 6px rgba(68, 96, 122, 0.24),
+    0 10px 24px -10px rgba(68, 96, 122, 0.5);
+}
+.pill-solid:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 10px rgba(68, 96, 122, 0.26),
+    0 18px 34px -12px rgba(68, 96, 122, 0.55);
+}
+.pill-solid:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.pill-glass {
+  color: var(--color-ti-ink);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-color: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 22px -12px rgba(28, 27, 25, 0.24);
+}
+.pill-glass:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.68);
+}
+.pill-glass:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.ti :focus-visible {
+  outline: 2px solid var(--color-ti-blue);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* ── Motion ────────────────────────────────────────────────────────────── */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.9s var(--ease),
+    transform 0.9s var(--ease);
+}
+.reveal.shown {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes ti-sweep {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes ti-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91, 122, 153, 0); }
+  50% { box-shadow: 0 0 0 7px rgba(91, 122, 153, 0.13); }
+}
+
+@keyframes ti-caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.step-live {
+  animation: ti-glow 1.9s var(--ease) infinite;
+}
+
+/* Tooltip: same material as the cards, so it reads as part of the surface. */
+.tip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  translate: -50% 6px;
+  width: max-content;
+  max-width: 230px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--color-ti-body);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 30px -12px rgba(28, 27, 25, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.34s var(--ease), translate 0.34s var(--ease);
+  z-index: 20;
+}
+.has-tip:hover .tip,
+.has-tip:focus-visible .tip {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

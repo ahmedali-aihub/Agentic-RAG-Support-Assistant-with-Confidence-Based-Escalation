@@ -28,6 +28,29 @@
   --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Consolas, monospace;
 }
 
+/* Titanium palette for the landing surface. Warm greys with a single muted
+   metallic accent — the finish on Apple hardware, not a flat white page. */
+@theme {
+  --color-ti-100: #f2f1ee;
+  --color-ti-200: #e8e6e3;
+  --color-ti-300: #dcd9d5;
+  --color-ti-400: #d4d2ce;
+  --color-ti-500: #b8b5b0;
+  --color-ti-ink: #1c1b19;
+  --color-ti-body: #55534f;
+  --color-ti-mute: #85827d;
+  --color-ti-blue: #5b7a99;
+  --color-ti-blue-deep: #44607a;
+}
+
+/* The two surfaces are opposite themes; the route sets which ground paints. */
+:root[data-surface="landing"],
+:root[data-surface="landing"] body {
+  color-scheme: light;
+  background: var(--color-ti-200);
+  color: var(--color-ti-ink);
+}
+
 :root {
   color-scheme: dark;
   font-family: var(--font-display);
@@ -57,8 +80,9 @@ body {
 }
 
 /* A single soft key light from above, the way Apple lights a product against
-   black. No grid, no scanlines — the ground stays pure. */
-body::before {
+   black. No grid, no scanlines — the ground stays pure. Console only: on the
+   light surface this would only muddy the titanium. */
+:root:not([data-surface="landing"]) body::before {
   content: "";
   position: fixed;
   inset: 0;
