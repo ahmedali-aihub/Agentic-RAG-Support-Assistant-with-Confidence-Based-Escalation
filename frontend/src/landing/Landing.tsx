@@ -72,10 +72,10 @@ export default function Landing() {
   return (
     <div className="ti-ground min-h-svh text-ti-ink antialiased">
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-white/45 bg-white/40 backdrop-blur-2xl">
+      <header className="sticky top-0 z-40 nav-fill hairline border-b backdrop-blur-2xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <span className="flex items-center gap-2.5">
-            <span className="graphite grid h-7 w-7 place-items-center rounded-lg text-white">
+            <span className="graphite grid h-7 w-7 place-items-center rounded-lg">
               <IconShield className="h-4 w-4" />
             </span>
             <span className="text-[0.9rem] font-semibold tracking-[-0.02em]">Support Assistant</span>
@@ -122,14 +122,14 @@ export default function Landing() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <a
               href="#demo"
-              className="graphite inline-flex h-[50px] items-center gap-2 rounded-full px-8 text-[0.94rem] font-medium whitespace-nowrap text-white transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+              className="graphite inline-flex h-[50px] items-center gap-2 rounded-full px-8 text-[0.94rem] font-medium whitespace-nowrap transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
             >
               Try it live
               <IconArrow className="h-4 w-4" />
             </a>
             <a
               href="#how"
-              className="glass-sm glass-lift inline-flex h-[50px] items-center rounded-full px-8 text-[0.94rem] font-medium whitespace-nowrap text-ti-ink transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:bg-white/70 active:translate-y-0 active:scale-[0.98]"
+              className="glass-sm glass-lift inline-flex h-[50px] items-center rounded-full px-8 text-[0.94rem] font-medium whitespace-nowrap text-ti-ink transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover-fill-4 active:translate-y-0 active:scale-[0.98]"
             >
               View docs
             </a>
@@ -163,7 +163,7 @@ export default function Landing() {
                 className="glass glass-lift flex flex-col rounded-3xl p-5 transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/70 text-ti-ink2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl fill-4 text-ti-ink2 ">
                     <Icon className="h-[19px] w-[19px]" />
                   </span>
                   <span className="text-[0.85rem] font-semibold tabular-nums text-ti-mute/60">
@@ -202,7 +202,7 @@ export default function Landing() {
 
           <div className="grid gap-3 lg:grid-cols-3">
             <article className="glass flex flex-col rounded-3xl p-7 opacity-85">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/60 text-ti-mute">
+              <span className="grid h-11 w-11 place-items-center rounded-xl fill-3 text-ti-mute">
                 <IconGuess className="h-5 w-5" />
               </span>
               <h3 className="mt-5 text-[1.05rem] font-semibold tracking-[-0.02em]">Ordinary RAG</h3>
@@ -218,7 +218,7 @@ export default function Landing() {
             </article>
 
             <article className="glass glass-lift flex flex-col rounded-3xl p-7 ring-1 ring-ti-ink/12 transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1">
-              <span className="graphite grid h-11 w-11 place-items-center rounded-xl text-white">
+              <span className="graphite grid h-11 w-11 place-items-center rounded-xl">
                 <IconShield className="h-5 w-5" />
               </span>
               <h3 className="mt-5 text-[1.05rem] font-semibold tracking-[-0.02em]">
@@ -236,7 +236,7 @@ export default function Landing() {
             </article>
 
             <article className="glass flex flex-col rounded-3xl p-7">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/60 text-ti-ink2">
+              <span className="grid h-11 w-11 place-items-center rounded-xl fill-3 text-ti-ink2">
                 <IconDoc className="h-5 w-5" />
               </span>
               <h3 className="mt-5 text-[1.05rem] font-semibold tracking-[-0.02em]">What you keep</h3>
@@ -282,7 +282,7 @@ export default function Landing() {
                 />
                 <button
                   type="submit"
-                  className="graphite h-[50px] shrink-0 rounded-full px-8 text-[0.92rem] font-medium whitespace-nowrap text-white transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+                  className="graphite h-[50px] shrink-0 rounded-full px-8 text-[0.92rem] font-medium whitespace-nowrap transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
                 >
                   Get started
                 </button>

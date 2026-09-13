@@ -165,13 +165,13 @@ export function LiveDemo() {
 
   return (
     <div className="glass overflow-hidden rounded-[28px]">
-      <div className="flex items-center justify-between gap-4 border-b border-white/55 px-6 py-4">
+      <div className="flex items-center justify-between gap-4 hairline border-b px-6 py-4">
         <span className="flex items-center gap-2.5">
           <span className="h-2 w-2 rounded-full bg-ti-ink2/60" />
           <span className="text-[0.82rem] font-medium text-ti-body">Support Assistant</span>
         </span>
         {result?.simulated && (
-          <span className="rounded-full bg-white/60 px-2.5 py-1 text-[0.66rem] font-medium text-ti-mute">
+          <span className="rounded-full fill-3 px-2.5 py-1 text-[0.66rem] font-medium text-ti-mute">
             Recorded example — backend offline
           </span>
         )}
@@ -193,7 +193,7 @@ export function LiveDemo() {
                       key={q}
                       type="button"
                       onClick={() => run(q)}
-                      className="glass-sm rounded-full px-3.5 py-2 text-left text-[0.78rem] text-ti-body transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:bg-white/70 active:translate-y-0"
+                      className="glass-sm rounded-full px-3.5 py-2 text-left text-[0.78rem] text-ti-body transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover-fill-4 active:translate-y-0"
                     >
                       {q}
                     </button>
@@ -204,7 +204,7 @@ export function LiveDemo() {
 
             {asked && (
               <div className="flex justify-end">
-                <p className="graphite max-w-[86%] rounded-[18px] rounded-br-md px-4 py-2.5 text-[0.88rem] leading-relaxed text-white">
+                <p className="graphite max-w-[86%] rounded-[18px] rounded-br-md px-4 py-2.5 text-[0.88rem] leading-relaxed">
                   {asked}
                 </p>
               </div>
@@ -240,7 +240,7 @@ export function LiveDemo() {
                     {result.citations.map((c) => (
                       <span
                         key={c}
-                        className="rounded-full bg-white/70 px-2.5 py-1 text-[0.7rem] text-ti-body"
+                        className="rounded-full fill-4 px-2.5 py-1 text-[0.7rem] text-ti-body"
                       >
                         {c}
                       </span>
@@ -271,10 +271,10 @@ export function LiveDemo() {
               type="submit"
               disabled={busy || !value.trim()}
               aria-label="Send"
-              className="graphite grid h-12 w-12 shrink-0 place-items-center rounded-full text-white transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-35"
+              className="graphite grid h-12 w-12 shrink-0 place-items-center rounded-full transition-[transform,box-shadow,background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-35"
             >
               {busy ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/90 border-r-transparent" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
               ) : (
                 <IconArrow className="h-[18px] w-[18px]" />
               )}
@@ -283,7 +283,7 @@ export function LiveDemo() {
         </div>
 
         {/* Pipeline */}
-        <div className="border-t border-white/55 bg-white/25 p-5 lg:border-t-0 lg:border-l">
+        <div className="hairline border-t fill-1 p-5 lg:border-t-0 lg:border-l">
           <span className="text-[0.7rem] font-semibold tracking-[0.13em] text-ti-mute uppercase">
             Pipeline
           </span>
@@ -300,9 +300,9 @@ export function LiveDemo() {
                     tabIndex={0}
                     className={`group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                       st === "running"
-                        ? "border-ti-ink/15 bg-white/80 animate-[ti-pulse_1.9s_ease-in-out_infinite]"
+                        ? "border-ti-ink/15 fill-5 animate-[ti-pulse_1.9s_ease-in-out_infinite]"
                         : st === "done"
-                          ? "border-white/70 bg-white/55"
+                          ? "hairline fill-3"
                           : st === "skipped"
                             ? "border-transparent opacity-35"
                             : "border-transparent opacity-55"
@@ -323,7 +323,7 @@ export function LiveDemo() {
                     )}
 
                     {/* Glass popover, same material as the cards. */}
-                    <span className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-20 w-max max-w-[220px] -translate-x-1/2 translate-y-1.5 rounded-xl border border-white/85 bg-white/90 px-3 py-2 text-[0.74rem] leading-snug text-ti-body opacity-0 shadow-[0_12px_30px_-12px_rgba(28,27,25,0.3)] backdrop-blur-xl transition-[opacity,translate] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                    <span className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-20 w-max max-w-[220px] -translate-x-1/2 translate-y-1.5 rounded-xl hairline border fill-5 px-3 py-2 text-[0.74rem] leading-snug text-ti-body opacity-0 shadow-[0_12px_30px_-12px_rgba(28,27,25,0.3)] backdrop-blur-xl transition-[opacity,translate] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
                       {tip}
                     </span>
                   </div>

@@ -24,6 +24,16 @@
   --ti-accent-ink: #ffffff;
 
   --ti-headline: linear-gradient(178deg, #22211e 0%, #3b3935 55%, #56534e 100%);
+
+  /* Surface fills. On light these are white veils; on dark they have to invert,
+     because white at low alpha over a dark ground is grey haze, not glass. */
+  --ti-fill-1: rgba(255, 255, 255, 0.25);
+  --ti-fill-2: rgba(255, 255, 255, 0.4);
+  --ti-fill-3: rgba(255, 255, 255, 0.6);
+  --ti-fill-4: rgba(255, 255, 255, 0.7);
+  --ti-fill-5: rgba(255, 255, 255, 0.9);
+  --ti-hairline: rgba(255, 255, 255, 0.5);
+  --ti-nav: rgba(255, 255, 255, 0.4);
 }
 
 /* Anodised: the same metal in a dark finish. Light now comes off the surface
@@ -48,6 +58,16 @@
   --ti-accent-ink: #1a1918;
 
   --ti-headline: linear-gradient(178deg, #ffffff 0%, #e4e1dc 52%, #b6b2ab 100%);
+
+  /* Dark fills lean on the ground rather than veiling it, with only a whisper
+     of light so edges stay legible. */
+  --ti-fill-1: rgba(255, 255, 255, 0.022);
+  --ti-fill-2: rgba(255, 255, 255, 0.04);
+  --ti-fill-3: rgba(255, 255, 255, 0.06);
+  --ti-fill-4: rgba(255, 255, 255, 0.08);
+  --ti-fill-5: rgba(255, 255, 255, 0.11);
+  --ti-hairline: rgba(255, 255, 255, 0.08);
+  --ti-nav: rgba(20, 19, 18, 0.62);
 }
 
 @layer components {
@@ -133,6 +153,18 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  /* Theme-aware surface fills, so no component hardcodes a white that only
+     works on one ground. */
+  .fill-1 { background: var(--ti-fill-1); }
+  .fill-2 { background: var(--ti-fill-2); }
+  .fill-3 { background: var(--ti-fill-3); }
+  .fill-4 { background: var(--ti-fill-4); }
+  .fill-5 { background: var(--ti-fill-5); }
+  .hairline { border-color: var(--ti-hairline); }
+  .nav-fill { background: var(--ti-nav); }
+
+  .hover-fill-4:hover { background: var(--ti-fill-4); }
 
   .reveal {
     opacity: 0;
