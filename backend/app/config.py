@@ -31,10 +31,14 @@ DEFAULT_FREE_MODEL_CHAIN = [
     "openrouter/free",
 ]
 
-# Gemini's own free tier, largest daily allowance first.
+# Gemini's own free tier. Lite models first: their daily allowance is the
+# largest and they are ample for judging and summarising. Verified against the
+# live model list -- the 2.5 generation now 404s for new keys.
 DEFAULT_GEMINI_MODEL_CHAIN = [
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
 ]
 
 
