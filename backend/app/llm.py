@@ -111,16 +111,21 @@ def _is_account_quota_error(exc: Exception) -> bool:
 _calls = count()
 
 
-def _rotate(items: list[Candidate]) -> list[Candidate]:
-    """Advance the starting point each call so load spreads across the chain.
+ROTATION_WINDOW = 4
 
-    Always starting at the head sends every request to one model until it
-    breaks, which concentrates load and makes that model's throttling everyone's
-    problem.
+
+def _rotate(items: list[Candidate]) -> list[Candidate]:
+    """Start each call at a different point near the head of the chain.
+
+    Spreading load matters, but rotating across the whole chain would start some
+    requests at the slow reasoning models parked at the back — so a user's
+    latency would depend on where the counter happened to land. Rotation is
+    confined to the fast head; everything behind it keeps its order and stays
+    available as fallback.
     """
     if len(items) < 2:
         return items
-    offset = next(_calls) % len(items)
+    offset = next(_calls) % min(ROTATION_WINDOW, len(items))
     return items[offset:] + items[:offset]
 
 

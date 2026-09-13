@@ -9,26 +9,29 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # model. A long chain does not multiply one account's daily budget -- it buys
 # resilience against a single model being down, overloaded or refusing a
 # prompt. Extra budget comes from extra accounts and other providers.
+# Ordered by measured response time on a real support question, because the
+# head of this list is what almost every request actually pays. The large
+# reasoning models are capable but spend 20-60s thinking before answering,
+# which is most of a slow reply -- they sit at the back as capable fallbacks
+# rather than the default.
 DEFAULT_FREE_MODEL_CHAIN = [
-    # Structured-output capable — preferred for the JSON judge.
-    "nvidia/nemotron-3-super-120b-a12b:free",
-    "nex-agi/nex-n2.5-pro:free",
-    "dots-studio/dots-3-note-preview:free",
+    # Fast and reliable (~1-3s), structured-output capable where it matters.
     "nex-agi/nex-n2.5-mini:free",
     "liquid/lfm-2.5-2.6b:free",
-    # Large general models.
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
-    "thinkingmachines/inkling:free",
+    "nex-agi/nex-n2.5-pro:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "poolside/laguna-s-2.1:free",
+    "dots-studio/dots-3-note-preview:free",
+    "openrouter/free",
+    # Usually available, sometimes throttled.
     "google/gemma-4-31b-it:free",
     "google/gemma-4-26b-a4b-it:free",
-    "nvidia/nemotron-3.5-lightning:free",
-    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-    "thinkingmachines/inkling-small:free",
     "inclusionai/ling-3.0-flash-vl:free",
-    "poolside/laguna-s-2.1:free",
     "poolside/laguna-xs-2.1:free",
-    # Auto-router last: it picks among free models itself.
-    "openrouter/free",
+    # Slow reasoning models — capable, but 20s+ before a first token.
+    "nvidia/nemotron-3.5-lightning:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
 ]
 
 # Gemini's own free tier. Lite models first: their daily allowance is the
@@ -37,7 +40,6 @@ DEFAULT_FREE_MODEL_CHAIN = [
 DEFAULT_GEMINI_MODEL_CHAIN = [
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
     "gemini-3.8-flash",
 ]
 
@@ -62,7 +64,10 @@ class Settings(BaseSettings):
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
     gemini_models: str = ""
 
-    request_timeout_seconds: float = 60.0
+    # A model that hasn't answered in this long should yield to one that will.
+    # The chain is deep enough that moving on costs a couple of seconds, while
+    # waiting out a stalled model costs the whole request.
+    request_timeout_seconds: float = 20.0
 
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 

@@ -164,6 +164,17 @@ def test_rotation_advances_and_wraps(monkeypatch):
     assert [c.model for c in llm._rotate(items)] == ["a", "b", "c"]
 
 
+def test_rotation_stays_within_the_fast_head(monkeypatch):
+    """Rotation must never start a request at the slow tail of the chain."""
+    items = [candidate("openrouter", m) for m in "abcdefghij"]
+    monkeypatch.setattr(llm, "_calls", count())
+
+    starts = {llm._rotate(items)[0].model for _ in range(12)}
+    assert starts == set("abcd"), "only the first ROTATION_WINDOW may lead"
+    # The tail is still reachable, just never first.
+    assert [c.model for c in llm._rotate(items)][-1] in set("abcdefghij")
+
+
 def test_labels_never_leak_the_key():
     c = candidate("openrouter", "m1", 2)
     assert "key2" not in c.label
