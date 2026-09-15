@@ -226,6 +226,18 @@ export default function Queue() {
                           </div>
                         )}
 
+                        {status === "resolved" && !t.agent_answer && (
+                          <div className="flex flex-col gap-1 rounded-xl border border-warn/30 bg-warn/8 p-3">
+                            <span className="text-[0.8rem] font-medium text-warn">
+                              Closed without an answer
+                            </span>
+                            <p className="text-[0.78rem] leading-relaxed text-dim">
+                              Nothing was added to the knowledge base, so this question will
+                              escalate again. Reopen it to write the answer.
+                            </p>
+                          </div>
+                        )}
+
                         {t.agent_answer && (
                           <div className="flex flex-col gap-1.5 rounded-xl border border-good/30 bg-good/8 p-3">
                             <span className="flex items-center gap-2">
@@ -276,13 +288,30 @@ export default function Queue() {
                           {status !== "resolved" && (
                             <button
                               type="button"
-                              disabled={pending === t.id}
-                              onClick={() => move(t.id, "resolved", drafts[t.id]?.trim() || undefined)}
-                              className="rounded-full bg-good/15 px-3.5 py-1.5 text-[0.76rem] font-medium text-good transition-all duration-300 hover:bg-good/25 active:scale-95 disabled:opacity-50"
+                              // Resolving without an answer teaches nothing, which
+                              // is the whole point of the queue — so it is blocked
+                              // rather than quietly allowed.
+                              disabled={pending === t.id || !drafts[t.id]?.trim()}
+                              onClick={() => move(t.id, "resolved", drafts[t.id]!.trim())}
+                              title={
+                                drafts[t.id]?.trim()
+                                  ? "Resolve and add this answer to the knowledge base"
+                                  : "Write the answer first"
+                              }
+                              className="rounded-full bg-good/15 px-3.5 py-1.5 text-[0.76rem] font-medium text-good transition-all duration-300 hover:bg-good/25 active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-faint disabled:ring-1 disabled:ring-line"
                             >
-                              {drafts[t.id]?.trim()
-                                ? "Resolve and teach"
-                                : "Mark resolved"}
+                              Resolve and teach
+                            </button>
+                          )}
+                          {status !== "resolved" && !drafts[t.id]?.trim() && (
+                            <button
+                              type="button"
+                              disabled={pending === t.id}
+                              onClick={() => move(t.id, "resolved")}
+                              title="Close this without adding anything to the knowledge base"
+                              className="rounded-full border border-line px-3.5 py-1.5 text-[0.76rem] font-medium text-faint transition-all duration-300 hover:text-dim active:scale-95 disabled:opacity-50"
+                            >
+                              Close without answering
                             </button>
                           )}
                           {status === "resolved" && (
