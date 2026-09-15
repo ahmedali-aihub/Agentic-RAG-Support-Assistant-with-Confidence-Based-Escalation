@@ -39,3 +39,8 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Playwright capture artifacts (screenshots are committed, raw video is not)
+docs/media/*.webm
+frontend/test-results/
+frontend/playwright-report/
