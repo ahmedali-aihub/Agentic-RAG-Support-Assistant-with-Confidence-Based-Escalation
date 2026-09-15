@@ -41,7 +41,7 @@ def chain(monkeypatch):
     monkeypatch.setattr(llm, "build_candidates", lambda: cands)
     monkeypatch.setattr(llm, "_rotate", lambda items: items)
     monkeypatch.setattr(
-        llm, "_client", lambda provider, model, key, base, temp: FakeModel(behaviours[model])
+        llm, "_client", lambda provider, model, key, base, temp, timeout: FakeModel(behaviours[model])
     )
     return behaviours
 
@@ -94,7 +94,7 @@ def test_spent_key_retires_only_that_account(monkeypatch):
     ]
     tried: list[str] = []
 
-    def client(provider, model, key, base, temp):
+    def client(provider, model, key, base, temp, timeout):
         tried.append(f"{key}/{model}")
         # Only the first account is out of budget.
         return FakeModel(RuntimeError(QUOTA_429) if key == "key1" else "from second account")
@@ -115,7 +115,7 @@ def test_gemini_quota_recognised(monkeypatch):
     cands = [candidate("gemini", "g1", 1), candidate("gemini", "g2", 1)]
     tried: list[str] = []
 
-    def client(provider, model, key, base, temp):
+    def client(provider, model, key, base, temp, timeout):
         tried.append(model)
         return FakeModel(RuntimeError(GEMINI_QUOTA))
 
@@ -131,7 +131,7 @@ def test_gemini_quota_recognised(monkeypatch):
 def test_falls_over_to_gemini_when_openrouter_is_spent(monkeypatch):
     cands = [candidate("openrouter", "m1", 1), candidate("gemini", "g1", 1)]
 
-    def client(provider, model, key, base, temp):
+    def client(provider, model, key, base, temp, timeout):
         return FakeModel(RuntimeError(QUOTA_429) if provider == "openrouter" else "gemini answer")
 
     monkeypatch.setattr(llm, "build_candidates", lambda: cands)
@@ -147,7 +147,7 @@ def test_quota_exhausted_only_when_every_account_is_spent(monkeypatch):
     monkeypatch.setattr(llm, "build_candidates", lambda: cands)
     monkeypatch.setattr(llm, "_rotate", lambda items: items)
     monkeypatch.setattr(
-        llm, "_client", lambda *a: FakeModel(RuntimeError(QUOTA_429))
+        llm, "_client", lambda *a, **kw: FakeModel(RuntimeError(QUOTA_429))
     )
 
     with pytest.raises(QuotaExhausted, match="Every configured account"):
@@ -191,3 +191,46 @@ def test_build_candidates_pairs_every_key_with_every_model(monkeypatch):
     assert len(cands) == 2 * 2 + 1
     # OpenRouter is spent before the scarcer Gemini allowance is touched.
     assert [c.provider for c in cands] == ["openrouter"] * 4 + ["gemini"]
+
+
+def test_early_candidates_get_a_short_leash(monkeypatch):
+    """Patience grows only as the chain runs out of alternatives."""
+    monkeypatch.setattr(llm.settings, "fast_timeout_seconds", 6.0)
+    monkeypatch.setattr(llm.settings, "request_timeout_seconds", 20.0)
+
+    assert llm._timeout_for(0) == 6.0
+    assert llm._timeout_for(2) == 6.0
+    assert llm._timeout_for(3) == 12.0
+    assert llm._timeout_for(7) == 12.0
+    assert llm._timeout_for(8) == 20.0
+
+
+def test_timeout_never_exceeds_the_ceiling(monkeypatch):
+    """A low ceiling must not be overridden by the escalation steps."""
+    monkeypatch.setattr(llm.settings, "fast_timeout_seconds", 6.0)
+    monkeypatch.setattr(llm.settings, "request_timeout_seconds", 5.0)
+
+    assert all(llm._timeout_for(i) <= 5.0 for i in range(12))
+
+
+def test_timeout_grows_across_a_failing_chain(monkeypatch):
+    """The nth attempt is what sets patience, whether or not earlier ones failed."""
+    cands = [candidate("openrouter", f"m{i}", 1) for i in range(10)]
+    seen: list[float] = []
+
+    def client(provider, model, key, base, temp, timeout):
+        seen.append(timeout)
+        return FakeModel(RuntimeError("down"))
+
+    monkeypatch.setattr(llm, "build_candidates", lambda: cands)
+    monkeypatch.setattr(llm, "_rotate", lambda items: items)
+    monkeypatch.setattr(llm, "_client", client)
+    monkeypatch.setattr(llm.settings, "fast_timeout_seconds", 6.0)
+    monkeypatch.setattr(llm.settings, "request_timeout_seconds", 20.0)
+
+    with pytest.raises(AllModelsFailed):
+        invoke_with_fallback([])
+
+    assert seen[:3] == [6.0, 6.0, 6.0]
+    assert seen[3] == 12.0
+    assert seen[8] == 20.0

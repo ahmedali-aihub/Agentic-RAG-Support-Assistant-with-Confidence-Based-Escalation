@@ -66,8 +66,10 @@ def build_candidates() -> list[Candidate]:
     return out
 
 
-@lru_cache(maxsize=256)
-def _client(provider: str, model: str, key: str, base_url: str, temperature: float) -> ChatOpenAI:
+@lru_cache(maxsize=512)
+def _client(
+    provider: str, model: str, key: str, base_url: str, temperature: float, timeout: float
+) -> ChatOpenAI:
     headers = (
         {
             "HTTP-Referer": "https://github.com/agentic-rag-support",
@@ -81,10 +83,26 @@ def _client(provider: str, model: str, key: str, base_url: str, temperature: flo
         api_key=key,
         base_url=base_url,
         temperature=temperature,
-        timeout=settings.request_timeout_seconds,
+        timeout=timeout,
         max_retries=0,
         default_headers=headers,
     )
+
+
+def _timeout_for(attempt: int) -> float:
+    """Patience grows as the chain is exhausted.
+
+    With dozens of candidates left, a model that hasn't answered in a few
+    seconds is better abandoned than waited on -- the next one is usually
+    faster than the remainder of this one. Once few are left, there is nothing
+    to fall back to, so waiting beats failing.
+    """
+    full = settings.request_timeout_seconds
+    if attempt < 3:
+        return min(settings.fast_timeout_seconds, full)
+    if attempt < 8:
+        return min(settings.fast_timeout_seconds * 2, full)
+    return full
 
 
 def _is_account_quota_error(exc: Exception) -> bool:
@@ -154,14 +172,18 @@ def invoke_with_fallback(
     errors: list[str] = []
     spent_keys: set[tuple[str, int]] = set()
 
+    attempted = 0
     for cand in _rotate(candidates):
         account = (cand.provider, cand.key_index)
         if account in spent_keys:
             continue
 
+        timeout = _timeout_for(attempted)
+        attempted += 1
+
         try:
             response = _client(
-                cand.provider, cand.model, cand.key, cand.base_url, temperature
+                cand.provider, cand.model, cand.key, cand.base_url, temperature, timeout
             ).invoke(messages)
         except Exception as exc:
             if _is_account_quota_error(exc):

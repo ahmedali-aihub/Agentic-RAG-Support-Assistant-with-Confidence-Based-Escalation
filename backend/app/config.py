@@ -64,10 +64,14 @@ class Settings(BaseSettings):
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
     gemini_models: str = ""
 
-    # A model that hasn't answered in this long should yield to one that will.
-    # The chain is deep enough that moving on costs a couple of seconds, while
-    # waiting out a stalled model costs the whole request.
+    # Ceiling, used once the chain is nearly exhausted and there is little left
+    # to fall back to.
     request_timeout_seconds: float = 20.0
+
+    # What the first few candidates get. A model that hasn't answered in this
+    # long is usually slower than simply trying the next one, and with dozens
+    # of candidates available that trade is nearly always worth making.
+    fast_timeout_seconds: float = 6.0
 
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 

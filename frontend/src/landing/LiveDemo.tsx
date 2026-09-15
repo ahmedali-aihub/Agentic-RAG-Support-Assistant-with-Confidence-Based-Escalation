@@ -101,27 +101,46 @@ export function LiveDemo() {
     };
   }, []);
 
-  /** Walks the pipeline lights in step with the timings the run reported. */
-  const playback = useCallback(async (r: Result) => {
-    const order: StepId[] = ["retrieve", "judge"];
-    if (r.retried) order.push("rewrite");
-    order.push(r.answered ? "answer" : "escalate");
+  /**
+   * Advances the pipeline lights while the request is still in flight.
+   *
+   * The server returns one response at the end, so there is no token stream to
+   * follow. Waiting for it before animating leaves the panel frozen for the
+   * whole call, which on a slow free tier is a minute of looking broken. This
+   * walks the stages the graph really runs, in order, and holds on the last one
+   * until the answer lands rather than pretending to finish.
+   */
+  const startProgress = useCallback(() => {
+    const order: StepId[] = ["retrieve", "judge", "rewrite", "answer"];
+    let i = 0;
+    let stopped = false;
 
-    for (const id of order) {
-      if (!alive.current) return;
-      setStates((s) => ({ ...s, [id]: "running" }));
-      // Real timings are compressed: the sequence is the point, not the wait.
-      await sleep(Math.min(Math.max(r.timings[id] ?? 700, 420), 1000));
-      if (!alive.current) return;
-      setStates((s) => ({ ...s, [id]: "done" }));
-    }
+    const step = async () => {
+      while (!stopped && alive.current && i < order.length) {
+        const id = order[i];
+        setStates((s) => ({ ...s, [id]: "running" }));
+        await sleep(i === order.length - 1 ? 9999_000 : 2200);
+        if (stopped || !alive.current) return;
+        setStates((s) => ({ ...s, [id]: "done" }));
+        i += 1;
+      }
+    };
+    void step();
 
-    setStates((s) => ({
-      ...s,
+    return () => {
+      stopped = true;
+    };
+  }, []);
+
+  /** Settles the pipeline on what the run actually did. */
+  const settle = useCallback((r: Result) => {
+    setStates({
+      retrieve: "done",
+      judge: "done",
       rewrite: r.retried ? "done" : "skipped",
       answer: r.answered ? "done" : "skipped",
       escalate: r.answered ? "skipped" : "done",
-    }));
+    });
     setResult(r);
   }, []);
 
@@ -133,6 +152,10 @@ export function LiveDemo() {
       setAsked(question);
       setValue("");
       setStates(IDLE);
+
+      // Start the lights before awaiting, so the panel moves during the call
+      // rather than after it.
+      const stopProgress = startProgress();
 
       let r: Result;
       try {
@@ -157,10 +180,11 @@ export function LiveDemo() {
         r = { ...RECORDED[looksAnswerable(question) ? "answer" : "escalate"], simulated: true };
       }
 
-      await playback(r);
+      stopProgress();
+      settle(r);
       if (alive.current) setBusy(false);
     },
-    [busy, playback]
+    [busy, startProgress, settle]
   );
 
   return (
