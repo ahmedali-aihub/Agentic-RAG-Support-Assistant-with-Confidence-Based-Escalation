@@ -2,13 +2,13 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.schemas import AskRequest, AskResponse, TicketOut
+from app.api.schemas import AskRequest, AskResponse, QueueStats, TicketOut, TicketUpdate
 from app.config import settings
 from app.graph.builder import run_query
-from app.graph.escalation import list_tickets
+from app.graph.escalation import list_tickets, queue_stats, set_ticket_status
 from app.graph.retriever import get_reranker, get_vectorstore
 
 logger = logging.getLogger(__name__)
@@ -75,3 +75,16 @@ def ask(request: AskRequest):
 @app.get("/tickets", response_model=list[TicketOut])
 def get_tickets():
     return list_tickets()
+
+
+@app.get("/tickets/stats", response_model=QueueStats)
+def get_queue_stats():
+    return queue_stats()
+
+
+@app.patch("/tickets/{ticket_id}", response_model=TicketOut)
+def update_ticket(ticket_id: str, update: TicketUpdate):
+    ticket = set_ticket_status(ticket_id, update.status, update.note)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail=f"No ticket {ticket_id}")
+    return ticket

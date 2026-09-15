@@ -142,7 +142,13 @@ export default function App() {
             href="#/"
             className="text-[0.78rem] font-medium text-faint transition-colors duration-300 hover:text-text"
           >
-            ← Overview
+            Overview
+          </a>
+          <a
+            href="#/queue"
+            className="text-[0.78rem] font-medium text-faint transition-colors duration-300 hover:text-text"
+          >
+            Queue
           </a>
           <div className="flex items-center gap-2.5 rounded-full border border-line bg-raised px-3 py-1.5">
             <StatusDot tone={busy ? "silver" : "idle"} active={busy} />

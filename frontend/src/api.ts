@@ -1,4 +1,4 @@
-import type { AskResponse } from "./types";
+import type { AskResponse, QueueStats, Ticket, TicketStatus } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -13,5 +13,27 @@ export async function askQuestion(question: string): Promise<AskResponse> {
     throw new Error(`Request failed: ${res.status}`);
   }
 
+  return res.json();
+}
+
+export async function listTickets(): Promise<Ticket[]> {
+  const res = await fetch(`${API_BASE}/tickets`);
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function queueStats(): Promise<QueueStats> {
+  const res = await fetch(`${API_BASE}/tickets/stats`);
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function updateTicket(id: string, status: TicketStatus): Promise<Ticket> {
+  const res = await fetch(`${API_BASE}/tickets/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json();
 }

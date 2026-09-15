@@ -38,3 +38,28 @@ export interface ChatMessage {
   pending?: boolean;
   elapsedMs?: number;
 }
+
+export type TicketStatus = "open" | "in_progress" | "resolved";
+
+export interface Ticket {
+  id: string;
+  created_at: string;
+  question: string;
+  summary: string;
+  summary_model: string | null;
+  confidence_score: number | null;
+  confidence_reasoning: string | null;
+  judge_model: string | null;
+  related_sources: string[];
+  status: TicketStatus;
+  updated_at: string | null;
+  resolution_note: string | null;
+}
+
+export interface QueueStats {
+  total: number;
+  open: number;
+  in_progress: number;
+  resolved: number;
+  resolution_rate: number;
+}

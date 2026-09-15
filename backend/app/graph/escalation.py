@@ -44,7 +44,47 @@ def enqueue_ticket(ticket: dict) -> None:
 
 def list_tickets() -> list[dict]:
     with _queue_lock:
-        return _read_queue()
+        # Newest first: a triage queue is worked from the most recent arrival.
+        return sorted(_read_queue(), key=lambda t: t.get("created_at", ""), reverse=True)
+
+
+def set_ticket_status(ticket_id: str, status: str, note: str | None = None) -> dict | None:
+    """Move a ticket through the queue. Returns the updated ticket, or None.
+
+    Read and write happen under one lock: two agents claiming the same ticket
+    would otherwise each write a full list built from a stale read, and the
+    second would silently undo the first.
+    """
+    with _queue_lock:
+        items = _read_queue()
+        for item in items:
+            if item["id"] != ticket_id:
+                continue
+            item["status"] = status
+            item["updated_at"] = datetime.now(timezone.utc).isoformat()
+            if note is not None:
+                item["resolution_note"] = note
+            _write_queue(items)
+            return item
+    return None
+
+
+def queue_stats() -> dict:
+    """Counts by status, plus what share of escalations a human has closed."""
+    items = list_tickets()
+    by_status: dict[str, int] = {}
+    for t in items:
+        by_status[t.get("status", "open")] = by_status.get(t.get("status", "open"), 0) + 1
+
+    resolved = by_status.get("resolved", 0)
+    total = len(items)
+    return {
+        "total": total,
+        "open": by_status.get("open", 0),
+        "in_progress": by_status.get("in_progress", 0),
+        "resolved": resolved,
+        "resolution_rate": round(resolved / total, 3) if total else 0.0,
+    }
 
 
 @timed("escalate")

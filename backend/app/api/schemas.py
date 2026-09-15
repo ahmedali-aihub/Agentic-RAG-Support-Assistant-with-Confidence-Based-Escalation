@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -26,6 +28,19 @@ class AskResponse(BaseModel):
     top_relevance: float | None = None
 
 
+class TicketUpdate(BaseModel):
+    status: Literal["open", "in_progress", "resolved"]
+    note: str | None = None
+
+
+class QueueStats(BaseModel):
+    total: int
+    open: int
+    in_progress: int
+    resolved: int
+    resolution_rate: float
+
+
 class TicketOut(BaseModel):
     id: str
     created_at: str
@@ -37,3 +52,5 @@ class TicketOut(BaseModel):
     judge_model: str | None = None
     related_sources: list[str] = []
     status: str
+    updated_at: str | None = None
+    resolution_note: str | None = None

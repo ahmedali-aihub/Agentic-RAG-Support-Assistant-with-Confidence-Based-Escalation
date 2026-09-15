@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import Console from './App.tsx'
 import Landing from './landing/Landing.tsx'
+import Queue from './queue/Queue.tsx'
 
 /**
  * Hash routing rather than a router dependency: there are two routes, and a
@@ -18,13 +19,17 @@ function Root() {
   }, [])
 
   const isConsole = hash.startsWith('#/app')
+  const isQueue = hash.startsWith('#/queue')
+  const isOperator = isConsole || isQueue
 
-  // The two surfaces are opposite themes, so the document theme follows the
-  // route -- otherwise the light page would paint over a black ground.
+  // The operator surfaces and the landing page are opposite themes, so the
+  // document surface follows the route -- otherwise the light page would paint
+  // over a black ground.
   useEffect(() => {
-    document.documentElement.dataset.surface = isConsole ? 'console' : 'landing'
-  }, [isConsole])
+    document.documentElement.dataset.surface = isOperator ? 'console' : 'landing'
+  }, [isOperator])
 
+  if (isQueue) return <Queue />
   return isConsole ? <Console /> : <Landing />
 }
 
