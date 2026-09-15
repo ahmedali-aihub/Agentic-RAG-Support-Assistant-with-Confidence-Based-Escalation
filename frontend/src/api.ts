@@ -28,11 +28,15 @@ export async function queueStats(): Promise<QueueStats> {
   return res.json();
 }
 
-export async function updateTicket(id: string, status: TicketStatus): Promise<Ticket> {
+export async function updateTicket(
+  id: string,
+  status: TicketStatus,
+  answer?: string
+): Promise<Ticket> {
   const res = await fetch(`${API_BASE}/tickets/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, answer }),
   });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json();

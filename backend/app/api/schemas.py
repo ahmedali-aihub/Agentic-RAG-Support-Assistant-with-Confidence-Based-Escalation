@@ -31,6 +31,12 @@ class AskResponse(BaseModel):
 class TicketUpdate(BaseModel):
     status: Literal["open", "in_progress", "resolved"]
     note: str | None = None
+    # The agent's answer. Supplied on resolve, it is embedded into the knowledge
+    # base so the same question is answered directly next time.
+    answer: str | None = None
+    # The agent's answer. Supplied on resolve, it enters the knowledge base so
+    # the same question is answered directly next time.
+    answer: str | None = None
 
 
 class QueueStats(BaseModel):
@@ -39,6 +45,8 @@ class QueueStats(BaseModel):
     in_progress: int
     resolved: int
     resolution_rate: float
+    # Answers the knowledge base has gained from resolved tickets.
+    learned: int = 0
 
 
 class TicketOut(BaseModel):
@@ -54,3 +62,5 @@ class TicketOut(BaseModel):
     status: str
     updated_at: str | None = None
     resolution_note: str | None = None
+    agent_answer: str | None = None
+    learned: bool = False

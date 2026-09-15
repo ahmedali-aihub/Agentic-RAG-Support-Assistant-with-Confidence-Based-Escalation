@@ -48,7 +48,13 @@ def list_tickets() -> list[dict]:
         return sorted(_read_queue(), key=lambda t: t.get("created_at", ""), reverse=True)
 
 
-def set_ticket_status(ticket_id: str, status: str, note: str | None = None) -> dict | None:
+def set_ticket_status(
+    ticket_id: str,
+    status: str,
+    note: str | None = None,
+    answer: str | None = None,
+    learned: bool | None = None,
+) -> dict | None:
     """Move a ticket through the queue. Returns the updated ticket, or None.
 
     Read and write happen under one lock: two agents claiming the same ticket
@@ -64,6 +70,10 @@ def set_ticket_status(ticket_id: str, status: str, note: str | None = None) -> d
             item["updated_at"] = datetime.now(timezone.utc).isoformat()
             if note is not None:
                 item["resolution_note"] = note
+            if answer is not None:
+                item["agent_answer"] = answer
+            if learned is not None:
+                item["learned"] = learned
             _write_queue(items)
             return item
     return None

@@ -41,6 +41,7 @@ export default function Queue() {
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [filter, setFilter] = useState<TicketStatus | "all">("open");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
 
@@ -60,10 +61,10 @@ export default function Queue() {
   }, [load]);
 
   const move = useCallback(
-    async (id: string, status: TicketStatus) => {
+    async (id: string, status: TicketStatus, answer?: string) => {
       setPending(id);
       try {
-        await updateTicket(id, status);
+        await updateTicket(id, status, answer);
         await load();
       } catch {
         setError(true);
@@ -109,9 +110,9 @@ export default function Queue() {
             <Metric label="In progress" value={stats.in_progress} />
             <Metric label="Resolved" value={stats.resolved} tone="text-good" />
             <Metric
-              label="Closed by a human"
-              value={`${Math.round(stats.resolution_rate * 100)}%`}
-              tone="text-dim"
+              label="Added to knowledge base"
+              value={stats.learned}
+              tone={stats.learned > 0 ? "text-good" : "text-dim"}
             />
           </div>
         )}
@@ -225,6 +226,42 @@ export default function Queue() {
                           </div>
                         )}
 
+                        {t.agent_answer && (
+                          <div className="flex flex-col gap-1.5 rounded-xl border border-good/30 bg-good/8 p-3">
+                            <span className="flex items-center gap-2">
+                              <Eyebrow>Answered by an agent</Eyebrow>
+                              {t.learned && (
+                                <span className="rounded-full bg-good/20 px-2 py-0.5 text-[0.62rem] font-semibold text-good">
+                                  in the knowledge base
+                                </span>
+                              )}
+                            </span>
+                            <p className="text-[0.85rem] leading-relaxed text-dim">
+                              {t.agent_answer}
+                            </p>
+                          </div>
+                        )}
+
+                        {status !== "resolved" && (
+                          <div className="flex flex-col gap-2">
+                            <Eyebrow>Answer this</Eyebrow>
+                            <textarea
+                              id={`answer-${t.id}`}
+                              rows={3}
+                              value={drafts[t.id] ?? ""}
+                              onChange={(e) =>
+                                setDrafts((d) => ({ ...d, [t.id]: e.target.value }))
+                              }
+                              placeholder="Write the answer a customer should have received…"
+                              className="resize-y rounded-xl border border-line bg-raised px-3 py-2.5 text-[0.85rem] leading-relaxed text-text outline-none placeholder:text-faint focus-visible:border-line-bright"
+                            />
+                            <span className="text-[0.72rem] text-faint">
+                              Resolving with an answer adds it to the knowledge base, so the
+                              next person asking this gets it without waiting.
+                            </span>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3.5">
                           {status !== "in_progress" && status !== "resolved" && (
                             <button
@@ -240,10 +277,12 @@ export default function Queue() {
                             <button
                               type="button"
                               disabled={pending === t.id}
-                              onClick={() => move(t.id, "resolved")}
+                              onClick={() => move(t.id, "resolved", drafts[t.id]?.trim() || undefined)}
                               className="rounded-full bg-good/15 px-3.5 py-1.5 text-[0.76rem] font-medium text-good transition-all duration-300 hover:bg-good/25 active:scale-95 disabled:opacity-50"
                             >
-                              Mark resolved
+                              {drafts[t.id]?.trim()
+                                ? "Resolve and teach"
+                                : "Mark resolved"}
                             </button>
                           )}
                           {status === "resolved" && (

@@ -54,6 +54,8 @@ export interface Ticket {
   status: TicketStatus;
   updated_at: string | null;
   resolution_note: string | null;
+  agent_answer: string | null;
+  learned: boolean;
 }
 
 export interface QueueStats {
@@ -62,4 +64,5 @@ export interface QueueStats {
   in_progress: number;
   resolved: number;
   resolution_rate: number;
+  learned: number;
 }

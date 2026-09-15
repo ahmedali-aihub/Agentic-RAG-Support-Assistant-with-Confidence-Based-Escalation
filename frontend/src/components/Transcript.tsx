@@ -18,12 +18,19 @@ const STAGES = [
 ];
 
 function sourceLabel(url: string) {
+  // Answers learned from resolved tickets aren't web pages; name them for what
+  // they are rather than showing an internal URL.
+  if (url.startsWith("internal://tickets/")) {
+    return `agent answer · ${url.split("/").pop()}`;
+  }
   try {
     return new URL(url).pathname.replace(/^\//, "") || url;
   } catch {
     return url;
   }
 }
+
+const isInternal = (url: string) => url.startsWith("internal://");
 
 function Confidence({ score, threshold = 0.6 }: { score: number; threshold?: number }) {
   const cleared = score >= threshold;
@@ -157,19 +164,30 @@ export function Transcript({
                 <div className="flex flex-col gap-2">
                   <Eyebrow>Sources</Eyebrow>
                   <div className="flex flex-wrap gap-2">
-                    {m.citations.map((url, i) => (
-                      <a
-                        key={url}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ animationDelay: `${i * 70}ms` }}
-                        className="animate-rise rounded-full border border-line bg-raised px-3 py-1.5 text-[0.76rem] text-dim transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:border-line-bright hover:text-text hover:bevel-lift"
-                      >
-                        {sourceLabel(url)}
-                        <span className="ml-1.5 text-faint">↗</span>
-                      </a>
-                    ))}
+                    {m.citations.map((url, i) =>
+                      isInternal(url) ? (
+                        <span
+                          key={url}
+                          style={{ animationDelay: `${i * 70}ms` }}
+                          title="Learned from a question a support agent answered"
+                          className="animate-rise rounded-full border border-good/35 bg-good/10 px-3 py-1.5 text-[0.76rem] text-good"
+                        >
+                          {sourceLabel(url)}
+                        </span>
+                      ) : (
+                        <a
+                          key={url}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ animationDelay: `${i * 70}ms` }}
+                          className="animate-rise rounded-full border border-line bg-raised px-3 py-1.5 text-[0.76rem] text-dim transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:border-line-bright hover:text-text hover:bevel-lift"
+                        >
+                          {sourceLabel(url)}
+                          <span className="ml-1.5 text-faint">↗</span>
+                        </a>
+                      )
+                    )}
                   </div>
                 </div>
               )}

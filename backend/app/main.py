@@ -10,6 +10,7 @@ from app.config import settings
 from app.graph.builder import run_query
 from app.graph.escalation import list_tickets, queue_stats, set_ticket_status
 from app.graph.retriever import get_reranker, get_vectorstore
+from app.learning import index_agent_answer, learned_count, remove_agent_answer
 
 logger = logging.getLogger(__name__)
 
@@ -79,12 +80,26 @@ def get_tickets():
 
 @app.get("/tickets/stats", response_model=QueueStats)
 def get_queue_stats():
-    return queue_stats()
+    return {**queue_stats(), "learned": learned_count()}
 
 
 @app.patch("/tickets/{ticket_id}", response_model=TicketOut)
 def update_ticket(ticket_id: str, update: TicketUpdate):
-    ticket = set_ticket_status(ticket_id, update.status, update.note)
+    ticket = set_ticket_status(ticket_id, update.status, update.note, update.answer)
     if ticket is None:
         raise HTTPException(status_code=404, detail=f"No ticket {ticket_id}")
+
+    answer = (update.answer or ticket.get("agent_answer") or "").strip()
+
+    # Resolving with an answer closes the gap that caused the escalation: the
+    # answer joins the knowledge base, so the next person asking gets it
+    # directly instead of waiting on a human again.
+    if update.status == "resolved" and answer:
+        index_agent_answer(ticket, answer)
+        ticket = set_ticket_status(ticket_id, "resolved", learned=True)
+    elif update.status != "resolved" and ticket.get("learned"):
+        # Reopened: the answer is no longer trusted, so it leaves the index.
+        remove_agent_answer(ticket_id)
+        ticket = set_ticket_status(ticket_id, update.status, learned=False)
+
     return ticket
