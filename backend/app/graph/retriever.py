@@ -54,7 +54,8 @@ def rewrite_query(question: str) -> str:
     except AllModelsFailed:
         return question
 
-    cleaned = rewritten.strip().strip('"').splitlines()[0].strip()
+    lines = rewritten.strip().strip('"').splitlines()
+    cleaned = lines[0].strip() if lines else ""
     return cleaned or question
 
 

@@ -1,5 +1,8 @@
 # Support Assistant
 
+[![CI](https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **A documentation-grounded support agent that scores its own evidence and escalates to a human instead of guessing.**
 
 Most RAG chatbots answer every question they are asked, including the ones their
@@ -153,6 +156,16 @@ Three surfaces: **`/`** overview and live demo · **`#/app`** operator console �
 > comma-separated keys. Free tiers are metered per account, so a second key is
 > genuinely more daily budget.
 
+**Or with Docker** (the index is built into the image, so there's no separate
+ingestion step):
+
+```bash
+cp backend/.env.example backend/.env    # add your API keys
+docker compose up --build
+```
+
+Backend on `:8000`, frontend on `:5173`.
+
 ---
 
 ## Evaluating it
@@ -161,8 +174,9 @@ Three surfaces: **`/`** overview and live demo · **`#/app`** operator console �
 cd backend
 python scripts/generate_eval_set.py      # questions generated FROM indexed passages
 python scripts/run_comparison.py         # agentic vs plain RAG, side by side
+python scripts/threshold_sweep.py        # what CONFIDENCE_THRESHOLD actually trades off
 python scripts/run_eval.py               # escalation accuracy alone
-python -m pytest -q                      # 33 tests
+python -m pytest -q                      # 66 tests, no API key required
 ```
 
 **The eval set is not hand-written.** Its answerable half is generated from
@@ -181,6 +195,21 @@ Errors are reported **by direction**, because they don't cost the same:
 
 A run that cannot measure anything says so rather than reporting a number —
 questions that never reached a judge are excluded, not scored.
+
+**The threshold has room either side of 0.6.** Re-scoring the judged questions
+at every threshold from 0.3 to 0.9 shows the confidence scores are strongly
+bimodal — the judge is either confident or it clearly isn't, with almost
+nothing landing in between. The route only changes once, at 0.9, where a
+single answerable question tips into escalation:
+
+| Threshold | Answered | Escalated | Over-escalated | Wrongly answered |
+|---|---|---|---|---|
+| 0.3 – 0.8 | 6 | 5 | 0 | 0 |
+| 0.9 | 5 | 6 | 1 | 0 |
+
+That is a narrower sweep than the sample size can really claim, but the shape
+of it — a threshold with slack on both sides rather than a knife-edge — is a
+more comfortable place for a default to sit than the alternative.
 
 ---
 
@@ -207,7 +236,7 @@ backend/
     llm.py          multi-provider failover
     baseline.py     plain RAG, for comparison
   scripts/          eval set generation, comparison, escalation accuracy
-  tests/            33 tests
+  tests/            66 tests, no API key required
 frontend/
   src/landing/      overview + live demo
   src/components/   operator console
