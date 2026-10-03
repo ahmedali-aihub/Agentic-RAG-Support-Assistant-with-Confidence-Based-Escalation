@@ -90,3 +90,20 @@ def test_stats_on_empty_queue_does_not_divide_by_zero(queue):
     s = escalation.queue_stats()
     assert s["total"] == 0
     assert s["resolution_rate"] == 0.0
+
+
+def test_get_ticket_finds_by_id(queue):
+    escalation.enqueue_ticket(ticket("a"))
+    escalation.enqueue_ticket(ticket("b"))
+    found = escalation.get_ticket("b")
+    assert found is not None
+    assert found["id"] == "b"
+
+
+def test_get_ticket_missing_returns_none(queue):
+    escalation.enqueue_ticket(ticket("a"))
+    assert escalation.get_ticket("nonexistent") is None
+
+
+def test_get_ticket_on_empty_queue(queue):
+    assert escalation.get_ticket("anything") is None

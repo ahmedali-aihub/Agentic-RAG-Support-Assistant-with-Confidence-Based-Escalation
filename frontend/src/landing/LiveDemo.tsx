@@ -246,9 +246,12 @@ export function LiveDemo() {
                     {result.answered ? "Answered from documentation" : "Escalated to a person"}
                   </span>
                   {result.ticket && (
-                    <span className="ml-auto text-[0.7rem] text-ti-mute">
-                      Ticket {result.ticket}
-                    </span>
+                    <a
+                      href={`#/ticket/${encodeURIComponent(result.ticket)}`}
+                      className="ml-auto text-[0.7rem] text-ti-mute underline decoration-dotted underline-offset-2 transition-colors hover:text-ti-ink"
+                    >
+                      Ticket {result.ticket} — check status
+                    </a>
                   )}
                 </div>
 

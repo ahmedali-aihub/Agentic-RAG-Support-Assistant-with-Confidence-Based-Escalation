@@ -48,6 +48,14 @@ def list_tickets() -> list[dict]:
         return sorted(_read_queue(), key=lambda t: t.get("created_at", ""), reverse=True)
 
 
+def get_ticket(ticket_id: str) -> dict | None:
+    with _queue_lock:
+        for item in _read_queue():
+            if item["id"] == ticket_id:
+                return item
+    return None
+
+
 def set_ticket_status(
     ticket_id: str,
     status: str,

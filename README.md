@@ -100,11 +100,23 @@ to issue a partial one. 20 candidates in, best 5 out.
 judge's own stated reasoning, per-node timing, how many passages were weighed
 and kept, and which model served the request — all returned with the answer.
 
-**Escalations reach a person.** Tickets carry a triage summary written for the
-agent who picks them up, and the queue moves them through open → in progress →
-resolved. The handoff has another end.
+**Escalations reach a person, and the answer reaches both ends.** Tickets carry
+a triage summary written for the agent who picks them up, and the queue moves
+them through open → in progress → resolved. The person who asked gets a ticket
+number back and can look up its status at `#/ticket/<id>` at any time — that
+lookup is a separate, narrower endpoint than the agent's queue view, so it
+returns the question and the eventual answer but never the internal triage
+summary or judge reasoning the agent sees. Resolving a ticket with an answer
+also embeds it into the knowledge base, so the same question answers itself
+directly the next time it's asked, instead of escalating again.
 
 ![The escalation queue, showing declined questions with their confidence scores](docs/media/05-queue.png)
+
+**It knows what it is.** A fixed, small set of questions about the assistant
+itself ("tell me about yourself", "what can you do") are answered directly,
+before retrieval runs — there's no documentation that could ever satisfy the
+judge for a question that was never about the documentation, so routing those
+through the judge only produced wrong escalations.
 
 **It survives its own dependencies.** 56 candidates across 5 API keys and 2
 providers. A model that is down, throttled, or returns unparseable JSON is
@@ -149,8 +161,11 @@ uvicorn app.main:app --port 8000                     # ~40s model warmup
 cd frontend && npm install && npm run dev
 ```
 
-Three surfaces: **`/`** overview and live demo · **`#/app`** operator console ·
-**`#/queue`** escalation queue.
+Four surfaces: **`/`** overview and live demo · **`#/app`** operator console ·
+**`#/queue`** escalation queue (agent view) · **`#/ticket`** ticket lookup
+(customer view — the id in that URL is the only access control there is, so it
+returns the question and the eventual answer, never the agent's internal
+triage notes).
 
 > **Keys:** `OPENROUTER_API_KEY` and `GEMINI_API_KEY` each accept several
 > comma-separated keys. Free tiers are metered per account, so a second key is
@@ -176,7 +191,7 @@ python scripts/generate_eval_set.py      # questions generated FROM indexed pass
 python scripts/run_comparison.py         # agentic vs plain RAG, side by side
 python scripts/threshold_sweep.py        # what CONFIDENCE_THRESHOLD actually trades off
 python scripts/run_eval.py               # escalation accuracy alone
-python -m pytest -q                      # 66 tests, no API key required
+python -m pytest -q                      # 81 tests, no API key required
 ```
 
 **The eval set is not hand-written.** Its answerable half is generated from
@@ -231,16 +246,17 @@ response time, since the head of the chain is what almost every request pays.
 ```
 backend/
   app/
-    graph/          retriever · confidence (judge) · answer · escalation · builder
+    graph/          retriever · confidence (judge) · meta · answer · escalation · builder
     ingestion/      scrape → chunk → embed
     llm.py          multi-provider failover
     baseline.py     plain RAG, for comparison
   scripts/          eval set generation, comparison, escalation accuracy
-  tests/            66 tests, no API key required
+  tests/            81 tests, no API key required
 frontend/
   src/landing/      overview + live demo
   src/components/   operator console
-  src/queue/        escalation queue
+  src/queue/        escalation queue (agent view)
+  src/ticket/       ticket status lookup (customer view)
 ```
 
 ---
@@ -256,3 +272,7 @@ frontend/
   would be steadier than one model's opinion.
 - **Latency roughly doubles.** Acceptable for support, probably not for
   autocomplete.
+- **Ticket lookup has no identity check beyond the id itself.** That id is an
+  8-character random token, not a password, and there's no email or account
+  match behind it — the same model a real support ticketing system without a
+  login screen would use, but worth being explicit about.

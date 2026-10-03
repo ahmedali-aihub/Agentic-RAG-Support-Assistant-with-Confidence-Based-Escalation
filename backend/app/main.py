@@ -5,10 +5,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.schemas import AskRequest, AskResponse, QueueStats, TicketOut, TicketUpdate
+from app.api.schemas import (
+    AskRequest,
+    AskResponse,
+    QueueStats,
+    TicketOut,
+    TicketStatusOut,
+    TicketUpdate,
+)
 from app.config import settings
 from app.graph.builder import run_query
-from app.graph.escalation import list_tickets, queue_stats, set_ticket_status
+from app.graph.escalation import get_ticket, list_tickets, queue_stats, set_ticket_status
 from app.graph.retriever import get_reranker, get_vectorstore
 from app.learning import index_agent_answer, learned_count, remove_agent_answer
 
@@ -53,6 +60,9 @@ def ask(request: AskRequest):
     chunks = result.get("chunks", [])
     scores = [c["rerank_score"] for c in chunks if c.get("rerank_score") is not None]
     attempts = result.get("attempt", 1)
+    # A self-description question never retrieves anything, so "20 candidates
+    # considered" would misreport a search that didn't happen.
+    retrieved = result.get("path_taken") != "answered_self"
 
     return AskResponse(
         answer=result.get("answer", ""),
@@ -67,9 +77,32 @@ def ask(request: AskRequest):
         rewritten_query=result.get("rewritten_query"),
         timings=result.get("timings", {}),
         # Each attempt pulls its own candidate pool before reranking.
-        chunks_considered=settings.retrieval_candidate_k * attempts,
+        chunks_considered=settings.retrieval_candidate_k * attempts if retrieved else 0,
         chunks_used=len(chunks),
         top_relevance=max(scores) if scores else None,
+    )
+
+
+@app.get("/tickets/{ticket_id}/status", response_model=TicketStatusOut)
+def get_ticket_status(ticket_id: str):
+    """Public lookup for the person who asked, not the agent queue.
+
+    A ticket number is the access key -- there is no login -- so this returns
+    only what is safe to hand to anyone holding it: whether it's been picked
+    up, and the agent's answer once there is one. The internal triage summary
+    and judge reasoning stay out of this response; TicketOut (the agent view)
+    carries those.
+    """
+    ticket = get_ticket(ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail=f"No ticket {ticket_id}")
+
+    return TicketStatusOut(
+        id=ticket["id"],
+        question=ticket["question"],
+        status=ticket["status"],
+        created_at=ticket["created_at"],
+        answer=ticket.get("agent_answer") if ticket["status"] == "resolved" else None,
     )
 
 

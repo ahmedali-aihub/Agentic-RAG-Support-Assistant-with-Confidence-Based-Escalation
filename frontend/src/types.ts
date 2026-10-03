@@ -66,3 +66,14 @@ export interface QueueStats {
   resolution_rate: number;
   learned: number;
 }
+
+// What the person who asked the question may see when checking their ticket --
+// deliberately narrower than Ticket, which is the agent-facing view and carries
+// internal triage notes and judge reasoning the backend never sends here.
+export interface TicketStatusPublic {
+  id: string;
+  question: string;
+  status: TicketStatus;
+  created_at: string;
+  answer: string | null;
+}

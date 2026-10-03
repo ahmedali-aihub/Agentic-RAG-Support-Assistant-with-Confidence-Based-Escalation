@@ -31,9 +31,6 @@ class AskResponse(BaseModel):
 class TicketUpdate(BaseModel):
     status: Literal["open", "in_progress", "resolved"]
     note: str | None = None
-    # The agent's answer. Supplied on resolve, it is embedded into the knowledge
-    # base so the same question is answered directly next time.
-    answer: str | None = None
     # The agent's answer. Supplied on resolve, it enters the knowledge base so
     # the same question is answered directly next time.
     answer: str | None = None
@@ -64,3 +61,19 @@ class TicketOut(BaseModel):
     resolution_note: str | None = None
     agent_answer: str | None = None
     learned: bool = False
+
+
+class TicketStatusOut(BaseModel):
+    """What a customer may see when checking their own ticket.
+
+    Deliberately narrower than TicketOut: no triage summary (written for an
+    agent, and may quote retrieved excerpts), no judge reasoning, no internal
+    resolution note -- just whether it's been picked up and the answer once
+    there is one.
+    """
+
+    id: str
+    question: str
+    status: str
+    created_at: str
+    answer: str | None = None

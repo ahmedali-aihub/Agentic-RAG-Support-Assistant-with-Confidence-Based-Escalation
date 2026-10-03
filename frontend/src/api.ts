@@ -1,4 +1,4 @@
-import type { AskResponse, QueueStats, Ticket, TicketStatus } from "./types";
+import type { AskResponse, QueueStats, Ticket, TicketStatus, TicketStatusPublic } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -24,6 +24,16 @@ export async function listTickets(): Promise<Ticket[]> {
 
 export async function queueStats(): Promise<QueueStats> {
   const res = await fetch(`${API_BASE}/tickets/stats`);
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+/** Returns null for a 404 (unknown ticket) rather than throwing, since that is
+ * an expected outcome of a customer mistyping their ticket number -- not a
+ * failure the caller needs to handle differently from "not found yet". */
+export async function lookupTicketStatus(id: string): Promise<TicketStatusPublic | null> {
+  const res = await fetch(`${API_BASE}/tickets/${encodeURIComponent(id)}/status`);
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json();
 }

@@ -5,8 +5,13 @@ from langgraph.graph import END, StateGraph
 from app.graph.answer import generate_answer
 from app.graph.confidence import check_confidence, route_on_confidence
 from app.graph.escalation import escalate
+from app.graph.meta import answer_self_question, is_self_question
 from app.graph.nodes import retrieve_node, rewrite_node
 from app.graph.state import GraphState
+
+
+def _route_entry(state: GraphState) -> str:
+    return "answer_self" if is_self_question(state["question"]) else "retrieve"
 
 
 @lru_cache
@@ -18,8 +23,14 @@ def build_graph():
     graph.add_node("rewrite", rewrite_node)
     graph.add_node("answer", generate_answer)
     graph.add_node("escalate", escalate)
+    graph.add_node("answer_self", answer_self_question)
 
-    graph.set_entry_point("retrieve")
+    # A question about the assistant itself is answered directly, before
+    # retrieval runs at all -- there is no documentation that could ever
+    # satisfy the judge for a question that isn't about the documentation.
+    graph.set_conditional_entry_point(
+        _route_entry, {"retrieve": "retrieve", "answer_self": "answer_self"}
+    )
     graph.add_edge("retrieve", "check_confidence")
 
     graph.add_conditional_edges(
@@ -34,6 +45,7 @@ def build_graph():
 
     graph.add_edge("answer", END)
     graph.add_edge("escalate", END)
+    graph.add_edge("answer_self", END)
 
     return graph.compile()
 

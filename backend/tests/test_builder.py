@@ -133,3 +133,35 @@ def test_graph_has_no_edge_out_of_rewrite_back_to_itself(monkeypatch):
     graph = builder.build_graph().get_graph()
     rewrite_targets = {e.target for e in graph.edges if e.source == "rewrite"}
     assert rewrite_targets == {"check_confidence"}
+
+
+def test_self_question_never_reaches_retrieval(monkeypatch):
+    """A question about the assistant must take the direct answer_self path and
+    never touch retrieve, check_confidence, rewrite or escalate -- any of those
+    would mean a meta-question is being judged against documentation it was
+    never trying to match."""
+    def fail(state):
+        raise AssertionError("should not be called for a self-question")
+
+    monkeypatch.setattr(builder, "retrieve_node", fail)
+    monkeypatch.setattr(builder, "check_confidence", fail)
+    monkeypatch.setattr(builder, "rewrite_node", fail)
+    monkeypatch.setattr(builder, "escalate", fail)
+    monkeypatch.setattr(builder, "generate_answer", fail)
+
+    result = builder.build_graph().invoke({"question": "tell me about yourself"})
+
+    assert result["path_taken"] == "answered_self"
+    assert result["answer"]
+
+
+def test_documentation_question_still_goes_through_retrieval(monkeypatch):
+    """The meta short-circuit must not swallow real questions."""
+    monkeypatch.setattr(builder, "retrieve_node", fake_retrieve([{"text": "chunk"}]))
+    monkeypatch.setattr(builder, "check_confidence", scripted_judge([True]))
+    monkeypatch.setattr(builder, "generate_answer", fake_answer)
+    monkeypatch.setattr(builder, "escalate", fake_escalate)
+
+    result = builder.build_graph().invoke({"question": "How do I issue a partial refund?"})
+
+    assert result["path_taken"] == "answered"
