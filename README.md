@@ -18,6 +18,109 @@ this question never needed them.</sub>
 
 ---
 
+## In plain English
+
+### What it does
+
+It's a support chatbot that's allowed to say "I don't know."
+
+Most chatbots always answer, even when they're making it up. This one checks
+its own work first — it searches the documentation, then asks a second step
+to judge whether what it found actually answers the question, *before* writing
+a single word. If the documentation covers it, it answers and shows its
+source. If it doesn't, it doesn't guess — it hands the question to a person
+instead.
+
+### Why it's needed
+
+Companies have been held to refund policies, discounts, and promises their
+chatbot invented and a customer could reasonably believe. A bot that always
+answers has no way to avoid that — it can't tell the difference between "I
+know this" and "I'm guessing," because nothing in a normal RAG pipeline ever
+asks. This project adds that question, and builds a real decision — answer or
+escalate — around the result.
+
+### How it helps
+
+- **Trust** — every answer comes with a confidence score and a cited source,
+  not a black box.
+- **A real safety net** — when it hands off, the human doesn't start from
+  nothing: there's a triage summary explaining what was asked, what was found,
+  and why it wasn't enough.
+- **It gets smarter over time** — when a human answers an escalated question,
+  that answer is saved. Ask the same thing again, and the bot answers it
+  directly — no second escalation.
+- **It's worth a measurable amount of money** — the live demo includes a
+  calculator: at 10,000 tickets a month and roughly half deflected, that's
+  about **$990,000/year** in support costs a team never has to spend.
+
+### What happens when the AI can't answer — the full path to a person
+
+```
+Customer asks a question
+        │
+        ▼
+Search the documentation (RETRIEVE + RERANK — see below)
+        │
+        ▼
+A second AI step JUDGES: "Do these results actually answer this?"
+        │
+        ├── Yes, confident ───────────────────► Answer, with a citation
+        │
+        └── No, not confident
+                │
+                ▼
+        REWRITE the question in the documentation's own words,
+        and search again (one retry, not a loop)
+                │
+                ├── Now confident ─────────────► Answer, with a citation
+                │
+                └── Still not confident
+                        │
+                        ▼
+                ESCALATE:
+                 1. An AI step writes a TRIAGE SUMMARY for the human agent
+                    (what was asked, what was found, why it wasn't enough)
+                 2. A TICKET is created and dropped into the agent queue
+                 3. The customer gets a ticket number and a link to check
+                    status at any time
+                        │
+                        ▼
+                A HUMAN opens the ticket, reads the summary, writes
+                the real answer
+                        │
+                        ▼
+                The agent clicks "Resolve and teach" →
+                the answer is EMBEDDED into the knowledge base
+                        │
+                        ▼
+                The customer's ticket page now shows the answer, AND
+                the next person who asks the same question gets it
+                straight from the bot — no second escalation needed
+```
+
+That last loop — a human's answer teaching the bot so the same question never
+escalates twice — is the part most support bots don't have.
+
+### Where query rewriting and reranking fit in
+
+These aren't side features; they're two of the four real steps in the pipeline
+above, and they're the reason retrieval is harder than "search and return the
+top result":
+
+- **Reranking** happens on *every* search. The system pulls 20 possible
+  matches first, then a second, more careful model (a cross-encoder) reads the
+  question and each match *together* and picks the best 5. A fast search can
+  find something topically related without actually answering the question —
+  reranking is what catches that before it reaches the judge.
+- **Query rewriting** happens only on a retry. Customers describe symptoms
+  ("my card got rejected"); documentation describes mechanisms ("card
+  declined, decline_code"). If the first search comes up short, an AI step
+  rephrases the question in the documentation's own vocabulary and searches
+  again — bridging exactly that gap — before the system gives up and escalates.
+
+---
+
 ## The result
 
 Measured against a plain RAG baseline on the same questions, same index, same models:
