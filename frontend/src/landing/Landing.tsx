@@ -1,4 +1,5 @@
 import { LiveDemo } from "./LiveDemo";
+import { RoiPanel } from "./RoiPanel";
 import {
   IconAnswer,
   IconArrow,
@@ -251,6 +252,11 @@ export default function Landing() {
               </dl>
             </article>
           </div>
+        </Reveal>
+
+        {/* 5.5 — What it's worth */}
+        <Reveal className="pb-24 sm:pb-28">
+          <RoiPanel />
         </Reveal>
 
         {/* 6 — CTA */}
