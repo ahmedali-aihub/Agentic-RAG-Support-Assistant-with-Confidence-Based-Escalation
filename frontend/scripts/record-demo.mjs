@@ -1,5 +1,5 @@
 /***
- * Records the demo shown in the README.
+ * Records the demo shown in the README..
  *
  * It drives the real page against the real backend rather than staging
  * screenshots, so what the GIF shows is what the system actually did — including
