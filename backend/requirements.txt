@@ -1,4 +1,5 @@
-# the requirements for the agentic RAG Project
+# the requirements for the agentic RAG Project.
+
 numpy>=2.0
 fastapi>=0.115
 uvicorn[standard]>=0.34
